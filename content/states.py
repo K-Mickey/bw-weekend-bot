@@ -1,0 +1,26 @@
+from enum import StrEnum
+
+
+class States(StrEnum):
+    DEFAULT = "default"
+    START = "start"
+    PRICE = "price"
+    REGISTRATION = "registration"
+    DINNER = "dinner"
+    SCHEDULE = "schedule"
+    FIRST_DAY = "schedule-first-day"
+    SECOND_DAY = "schedule-second-day"
+    THIRD_DAY = "schedule-third-day"
+    SCHEDULE_OPENAIR = "schedule-openair"
+    SCHEDULE_OPENAIR_TOILET = "schedule-openair-toilet"
+    SCHEDULE_PARTY_FIRST_DAY = "schedule-party-first-day"
+    SCHEDULE_PARTY_SECOND_DAY = "schedule-party-second-day"
+    SCHEDULE_PARTY_THIRD_DAY = "schedule-party-third-day"
+    LOCATION = "location"
+    SDS = "location-sds"
+    PARTY = "location-party"
+    LOCATION_OPENAIR = "location-openair"
+    LOCATION_OPENAIR_TOILET = "location-openair-toilet"
+    NEWS = "news"
+    CHAT = "chat"
+    CONTACTS = "contacts"
