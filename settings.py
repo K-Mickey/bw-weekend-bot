@@ -1,3 +1,4 @@
+import secrets
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -5,6 +6,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     bot_token: str
+
+    webhook_url: str = "https://example.com/webhook"
+    webhook_path: str = "/webhook"
+    webhook_secret: str = secrets.token_urlsafe(32)
+    web_server_host: str = "0.0.0.0"
+    web_server_port: int = 8000
 
     base_path: Path = Path.cwd()
     db_path: Path = base_path / "src/bot.sqlite3"

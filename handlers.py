@@ -31,7 +31,6 @@ async def check_answer(message: Message, state: FSMContext):
     else:
         await state.update_data(state=new_state)
 
-    print(new_state)
     event = MESSAGES.get(new_state)
     for message_content in event.messages:
         await message_content.answer(message)
