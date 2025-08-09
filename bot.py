@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 async def start_polling() -> None:
     async with Bot(
-        token=settings.token,
+        token=settings.bot_token,
         default=DefaultBotProperties(parse_mode="HTML"),
     ).context() as bot:
         await bot.set_my_commands(commands=_get_commands())
@@ -33,7 +33,7 @@ def start_webhook() -> None:
     dp.include_router(router)
 
     bot = Bot(
-        token=settings.token,
+        token=settings.bot_token,
         default=DefaultBotProperties(parse_mode="HTML"),
     )
     dp.startup.register(_on_startup)
@@ -73,6 +73,5 @@ def _get_storage(db_path: Path) -> BaseStorage:
 def _get_commands() -> list[BotCommand]:
     return [
         BotCommand(command="/start", description="Запустить бота"),
-        BotCommand(command="/about", description="О боте"),
         BotCommand(command="/help", description="Помощь"),
     ]

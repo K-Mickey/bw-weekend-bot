@@ -1,5 +1,5 @@
 from aiogram import Router
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
@@ -12,6 +12,15 @@ router = Router()
 async def cmd_start(message: Message, state: FSMContext):
     await state.update_data(state=States.START)
     await send_event(message, state)
+
+
+@router.message(Command("help"))
+async def cmd_help(message: Message):
+    await message.answer(
+        text="Если что-то не работает, то напишите нам об этом:\n\n"
+        "- Автор бота Михаил: @k_mickey \n"
+        "- Наше главенство Мария: +79101463516"
+    )
 
 
 @router.message()
