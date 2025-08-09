@@ -1,4 +1,4 @@
-from .location import OPEN_AIR_EVENT, OPEN_AIR_TOILET_EVENT, PARTY_EVENT
+from .location import OPEN_AIR_EVENT, PARTY_EVENT
 from .states import States
 from .main_menu import menu_button
 from utils import Event, Image, Button, Text
@@ -52,17 +52,8 @@ SCHEDULE_MESSAGES = {
     States.SCHEDULE_OPENAIR: OPEN_AIR_EVENT.copy_and_set_kb(
         number_message=0,
         keyboard=[
-            [Button(text="Туалеты рядом", source=States.SCHEDULE_OPENAIR_TOILET)],
             [daily_button],
             [Button(text="Назад  ↩️", source=States.FIRST_DAY)],
-            [menu_button],
-        ],
-    ),
-    States.SCHEDULE_OPENAIR_TOILET: OPEN_AIR_TOILET_EVENT.copy_and_set_kb(
-        number_message=0,
-        keyboard=[
-            [Button(text="Назад  ↩️", source=States.SCHEDULE_OPENAIR)],
-            [daily_button],
             [menu_button],
         ],
     ),

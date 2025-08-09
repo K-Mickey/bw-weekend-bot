@@ -10,27 +10,29 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
-    state_title = States.START
-    await state.update_data(state=state_title)
-
-    event = MESSAGES.get(state_title)
-    for message_content in event.messages:
-        await message_content.answer(message)
+    await state.update_data(state=States.START)
+    await send_event(message, state)
 
 
 @router.message()
 async def check_answer(message: Message, state: FSMContext):
     state_data = await state.get_data()
-    current_state = state_data.get("state")
+    if not (current_state := state_data.get("state")):
+        await state.update_data(state=States.START)
 
-    new_state = States.DEFAULT
-    if event := MESSAGES.get(current_state):
+    elif event := MESSAGES.get(current_state):
         if button := event.get_button(message.text):
             await state.update_data(state=button.source)
-            new_state = button.source
-    else:
-        await state.update_data(state=new_state)
 
-    event = MESSAGES.get(new_state)
+    else:
+        await state.update_data(state=States.DEFAULT)
+
+    await send_event(message, state)
+
+
+async def send_event(message: Message, state: FSMContext):
+    state_data = await state.get_data()
+    current_state = state_data.get("state")
+    event = MESSAGES.get(current_state)
     for message_content in event.messages:
         await message_content.answer(message)

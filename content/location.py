@@ -12,12 +12,6 @@ OPEN_AIR_EVENT = Event(
     Image(path="location-open-air.png"),
 )
 
-OPEN_AIR_TOILET_EVENT = Event(
-    Text(
-        text="Так как опен будет на улице в течение 3-х часов, то "
-        "немаловажно рассказать, где туалеты поблизости 🚾 😜"
-    )
-)
 
 PARTY_EVENT = Event(
     Text(
@@ -78,15 +72,7 @@ LOCATION_MESSAGES = {
     States.LOCATION_OPENAIR: OPEN_AIR_EVENT.copy_and_set_kb(
         number_message=0,
         keyboard=[
-            [Button(text="Туалеты рядом", source=States.LOCATION_OPENAIR_TOILET)],
             [Button(text="Назад  ↩️", source=States.LOCATION)],
-            [menu_button],
-        ],
-    ),
-    States.LOCATION_OPENAIR_TOILET: OPEN_AIR_TOILET_EVENT.copy_and_set_kb(
-        number_message=0,
-        keyboard=[
-            [Button(text="Назад  ↩️", source=States.LOCATION_OPENAIR)],
             [menu_button],
         ],
     ),
