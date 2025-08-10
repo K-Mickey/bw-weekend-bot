@@ -18,7 +18,7 @@ repos:
           - "--indent=4"
           - "--no-ensure-ascii"
       - id: check-added-large-files
-        args: ["--maxkb=1024"]
+        args: ["--maxkb=15000"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.6

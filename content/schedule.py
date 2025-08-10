@@ -4,6 +4,10 @@ from .main_menu import menu_button
 from utils import Event, Image, Button, Text
 
 daily_button = Button(text="Расписание по дням", source=States.SCHEDULE)
+day_2nd_button = Button(text="Другие занятия", source=States.DAY_2ND)
+day_3nd_button = Button(text="Другие занятия", source=States.DAY_3ND)
+back_to_day_2nd = Button(text="Назад  ↩️", source=States.DAY_2ND)
+back_to_day_3nd = Button(text="Назад  ↩️", source=States.DAY_3ND)
 
 
 SCHEDULE_MESSAGES = {
@@ -12,14 +16,14 @@ SCHEDULE_MESSAGES = {
             path="schedule.jpg",
             caption="Выбери день, по которому тебе интересны детали и информация",
             keyboard=[
-                [Button(text="22 августа, пятница", source=States.FIRST_DAY)],
-                [Button(text="23 августа, суббота", source=States.SECOND_DAY)],
-                [Button(text="24 августа, воскресенье", source=States.THIRD_DAY)],
+                [Button(text="22 августа, пятница", source=States.DAY_1ND)],
+                [Button(text="23 августа, суббота", source=States.DAY_2ND)],
+                [Button(text="24 августа, воскресенье", source=States.DAY_3ND)],
                 [menu_button],
             ],
         ),
     ),
-    States.FIRST_DAY: Event(
+    States.DAY_1ND: Event(
         Text(
             text="<b>22 августа, ПЯТНИЦА</b>\n\n"
             "<i>16:00-19:00</i>\n"
@@ -31,15 +35,15 @@ SCHEDULE_MESSAGES = {
             "<b>Вечеринка</b>\n\n"
             "ул. Нижневолжская Набережная, 17б\n\n"
             "Кто будет диджеем:\n"
-            "21:00-02:00 Уточняется\n\n"
+            "21:00-02:00 Расписание уточняется\n\n"
             "По вопросу участия в мероприятии, если вы не являетесь обладателем пасса фестиваля, можно писать Маше.\n\n"
             "Регистрироваться на фестиваль можно будет на месте вечеринок! :)",
             keyboard=[
-                [Button(text="О месте open-air`а", source=States.SCHEDULE_OPENAIR)],
+                [Button(text="О месте open-air`а", source=States.DAY_1ND_OPEN_AIR)],
                 [
                     Button(
                         text="О месте вечеринки",
-                        source=States.SCHEDULE_LOCATION_PARTY_FIRST_DAY,
+                        source=States.DAY_1ND_LOC_PARTY,
                     )
                 ],
                 [Button(text="Назад  ↩️", source=States.SCHEDULE)],
@@ -47,82 +51,215 @@ SCHEDULE_MESSAGES = {
             ],
         )
     ),
-    States.SCHEDULE_OPENAIR: OPEN_AIR_EVENT.copy_and_set_kb(
+    States.DAY_1ND_OPEN_AIR: OPEN_AIR_EVENT.copy_and_set_kb(
         number_message=0,
         keyboard=[
             [daily_button],
-            [Button(text="Назад  ↩️", source=States.FIRST_DAY)],
+            [Button(text="Назад  ↩️", source=States.DAY_1ND)],
             [menu_button],
         ],
     ),
-    States.SCHEDULE_LOCATION_PARTY_FIRST_DAY: PARTY_EVENT.copy_and_set_kb(
+    States.DAY_1ND_LOC_PARTY: PARTY_EVENT.copy_and_set_kb(
         number_message=0,
         keyboard=[
-            [Button(text="Назад  ↩️", source=States.FIRST_DAY)],
+            [Button(text="Назад  ↩️", source=States.DAY_1ND)],
             [daily_button],
             [menu_button],
         ],
     ),
-    States.SECOND_DAY: Event(
+    States.DAY_2ND: Event(
         Image(
             path="schedule-second-day.jpg",
             caption="<b>23 августа, СУББОТА</b> \n"
             "Студия Social Dance Studio, ул. Б.Покровская, д.7, 2 этаж.\n\n"
             "<i>9:30-10:00</i> - регистрация участников и выдача конвертов\n\n"
             "<i>10:00-17:00</i> - Мастер-классы\n\n"
-            "<i>19:00-03:00</i> - Вечеринка с живой музыкой от группы The Lowcosters: главная вечеринка и соревнования\n\n"
+            "<i>19:00-03:00</i> - Главная вечеринка с живой музыкой от группы The Lowcosters\n\n"
             "______________________________________\n"
             "Все занятия будут в 2-х залах: \n"
             "NY — New-York\n"
             "BH — Big Hall\n\n"
             "На залах будут листы с обозначениями, на входе будет расписание, а администратор всегда готов вам помочь.",
             keyboard=[
-                [
-                    Button(
-                        text="Занятие 1. 10:00 - 11:30",
-                        source=States.SCHEDULE_TEMP_SECOND_DAY,
-                    )
-                ],
-                [
-                    Button(
-                        text="Занятие 2. 11:45 - 13:15",
-                        source=States.SCHEDULE_TEMP_SECOND_DAY,
-                    )
-                ],
-                [
-                    Button(
-                        text="Занятие 3. 14:00 - 15:30",
-                        source=States.SCHEDULE_TEMP_SECOND_DAY,
-                    )
-                ],
-                [
-                    Button(
-                        text="Бонус 1. 15:45 - 17:00",
-                        source=States.SCHEDULE_TEMP_SECOND_DAY,
-                    )
-                ],
-                [
-                    Button(
-                        text="Main party 19:00 - 03:00",
-                        source=States.SCHEDULE_PARTY_SECOND_DAY,
-                    )
-                ],
+                [Button(text="Занятие 1. 10:00 - 11:30", source=States.DAY_2ND_1_LES)],
+                [Button(text="Занятие 2. 11:45 - 13:15", source=States.DAY_2ND_2_LES)],
+                [Button(text="Занятие 3. 14:00 - 15:30", source=States.DAY_2ND_3_LES)],
+                [Button(text="Бонус. 15:45 - 17:00", source=States.DAY_2ND_4_LES)],
+                [Button(text="Main party 19:00 - 03:00", source=States.DAY_2ND_PARTY)],
                 [daily_button],
                 [menu_button],
             ],
         )
     ),
-    States.SCHEDULE_TEMP_SECOND_DAY: Event(
+    States.DAY_2ND_1_LES: Event(
         Text(
-            text="Скоро будет описание",
+            text="<b>Занятие 1. 10:00 - 11:30</b>\n\nВыбери уровень 👇",
             keyboard=[
-                [Button(text="Назад  ↩️", source=States.SECOND_DAY)],
+                [Button(text="Beginner", source=States.DAY_2ND_1_LES_BEG)],
+                [Button(text="Intermediate", source=States.DAY_2ND_1_LES_INT)],
+                [back_to_day_2nd],
                 [daily_button],
                 [menu_button],
             ],
         )
     ),
-    States.SCHEDULE_PARTY_SECOND_DAY: Event(
+    States.DAY_2ND_1_LES_BEG: Event(
+        Image(
+            path="schedule-anton-katya.jpg",
+            caption="<b>Антон Матвеев и Екатерина Громова</b>\n"
+            "<i>Суббота, 23 августа, 10:00-11:30</i>\n\n"
+            "Уровень: Beginner\n"
+            "Зал: BH - Big Hall\n"
+            "Тема: Вариации основного хода",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_2ND_1_LES)],
+                [day_2nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_1_LES_INT: Event(
+        Image(
+            path="schedule-igor-olya.jpg",
+            caption="<b>Игорь и Ольга Кузнецовы</b>\n"
+            "<i>Суббота, 23 августа, 10:00-11:30</i>\n\n"
+            "Уровень: Intermediate\n"
+            "Зал: NY - New York\n"
+            "Тема: Фигуры на 8-10-бесконечность",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_2ND_1_LES)],
+                [day_2nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_2_LES: Event(
+        Text(
+            text="<b>Занятие 2. 11:45 - 13:15</b>\n\nВыбери уровень 👇",
+            keyboard=[
+                [Button(text="Intermediate", source=States.DAY_2ND_2_LES_INT)],
+                [Button(text="Advanced", source=States.DAY_2ND_2_LES_ADV)],
+                [back_to_day_2nd],
+                [daily_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_2_LES_INT: Event(
+        Image(
+            path="schedule-lenya-liza.jpg",
+            caption="<b>Леонид Несов и Елизавета Козуб</b>\n"
+            "<i>Суббота, 23 августа, 11:45-13:15</i>\n\n"
+            "Уровень: Intermediate\n"
+            "Зал: BH - Big Hall\n"
+            "Тема: Микромузыкальность и вариации основного хода",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_2ND_2_LES)],
+                [day_2nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_2_LES_ADV: Event(
+        Image(
+            path="schedule-anton-katya.jpg",
+            caption="<b>Антон Матвеев и Екатерина Громова</b>\n"
+            "<i>Суббота, 23 августа, 11:45-13:15</i>\n\n"
+            "Уровень: Advanced\n"
+            "Зал: NY - New York\n"
+            "Тема: Импровизация и музыкальность",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_2ND_2_LES)],
+                [day_2nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_3_LES: Event(
+        Text(
+            text="<b>Занятие 3. 14:00 - 15:30</b>\n\nВыбери уровень 👇",
+            keyboard=[
+                [Button(text="Beginner", source=States.DAY_2ND_3_LES_BEG)],
+                [Button(text="Advanced", source=States.DAY_2ND_3_LES_ADV)],
+                [back_to_day_2nd],
+                [daily_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_3_LES_BEG: Event(
+        Image(
+            path="schedule-igor-olya.jpg",
+            caption="<b>Игорь и Ольга Кузнецовы</b>\n"
+            "<i>Суббота, 23 августа, 14:00-15:30</i>\n\n"
+            "Уровень: Beginner\n"
+            "Зал: BH - Big Hall\n"
+            "Тема: Танец как диалог",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_2ND_3_LES)],
+                [day_2nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_3_LES_ADV: Event(
+        Image(
+            path="schedule-roma-sasha.jpg",
+            caption="<b>Роман Андреев и Александра Метелькова</b>\n"
+            "<i>Суббота, 23 августа, 14:00-15:30</i>\n\n"
+            "Уровень: Advanced\n"
+            "Зал: NY - New York\n"
+            "Тема: Как быть удобными партнёрами и научиться слушать друг друга в танце.",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_2ND_3_LES)],
+                [day_2nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_4_LES: Event(
+        Text(
+            text="<b>Бонус. 15:45 - 17:00</b>\n\nВыберите занятие 👇",
+            keyboard=[
+                [Button(text="Бонус: Поддержки", source=States.DAY_2ND_4_LES_1)],
+                [Button(text="Бонус: Соло", source=States.DAY_2ND_4_LES_2)],
+                [back_to_day_2nd],
+                [daily_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_4_LES_1: Event(
+        Image(
+            path="schedule-roma-sasha.jpg",
+            caption="<b>Роман Андреев и Александра Метелькова</b>\n"
+            "<i>Суббота, 23 августа, 15:45-17:00</i>\n\n"
+            "Уровень: Любой\n"
+            "Зал: BH - Big Hall\n"
+            "Тема: Поддержки и трюки",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_2ND_4_LES)],
+                [day_2nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_4_LES_2: Event(
+        Image(
+            path="schedule-lenya-liza.jpg",
+            caption="<b>Леонид Несов и Елизавета Козуб</b>\n"
+            "<i>Суббота, 23 августа, 15:45-17:00</i>\n\n"
+            "Уровень: Любой\n"
+            "Зал: NY - New York\n"
+            "Тема: Соло",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_2ND_4_LES)],
+                [day_2nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_2ND_PARTY: Event(
         Image(
             path="schedule-dj.jpg",
             caption="<i>19:00-03:00</i>\n"
@@ -139,13 +276,8 @@ SCHEDULE_MESSAGES = {
             "♥Фотограф\n"
             "♥Видеограф\n",
             keyboard=[
-                [Button(text="Назад  ↩️", source=States.SECOND_DAY)],
-                [
-                    Button(
-                        text="О месте вечеринки",
-                        source=States.SCHEDULE_LOCATION_PARTY_SECOND_DAY,
-                    )
-                ],
+                [back_to_day_2nd],
+                [Button(text="О месте вечеринки", source=States.DAY_2ND_LOC_PARTY)],
                 [daily_button],
                 [menu_button],
             ],
@@ -176,15 +308,15 @@ SCHEDULE_MESSAGES = {
             "А ещё не забывайте – финалы соревнований будут проходить под живую музыку!",
         ),
     ),
-    States.SCHEDULE_LOCATION_PARTY_SECOND_DAY: PARTY_EVENT.copy_and_set_kb(
+    States.DAY_2ND_LOC_PARTY: PARTY_EVENT.copy_and_set_kb(
         number_message=0,
         keyboard=[
-            [Button(text="Назад  ↩️", source=States.SCHEDULE_PARTY_SECOND_DAY)],
+            [Button(text="Назад  ↩️", source=States.DAY_2ND_PARTY)],
             [daily_button],
             [menu_button],
         ],
     ),
-    States.THIRD_DAY: Event(
+    States.DAY_3ND: Event(
         Text(
             text="<b>25 августа, ВОСКРЕСЕНЬЕ</b> \n"
             "Студия Social Dance Studio, ул. Б.Покровская, д.7, 2 этаж.\n\n"
@@ -196,52 +328,157 @@ SCHEDULE_MESSAGES = {
             "BH — Big Hall\n\n"
             "На залах будут листы с обозначениями, на входе будет расписание, а администратор всегда готов вам помочь.",
             keyboard=[
-                [
-                    Button(
-                        text="Занятие 1. 10:00 - 11:30",
-                        source=States.SCHEDULE_TEMP_THIRD_DAY,
-                    )
-                ],
-                [
-                    Button(
-                        text="Занятие 2. 11:45 - 13:15",
-                        source=States.SCHEDULE_TEMP_THIRD_DAY,
-                    )
-                ],
-                [
-                    Button(
-                        text="Занятие 3. 14:00 - 15:30",
-                        source=States.SCHEDULE_TEMP_THIRD_DAY,
-                    )
-                ],
-                [
-                    Button(
-                        text="Бонус 2. 15:45 - 17:00",
-                        source=States.SCHEDULE_TEMP_THIRD_DAY,
-                    )
-                ],
-                [
-                    Button(
-                        text="Main party 19:00 - 00:00",
-                        source=States.SCHEDULE_PARTY_THIRD_DAY,
-                    )
-                ],
+                [Button(text="Йога. 10:00 - 11:30", source=States.DAY_3ND_1_LES)],
+                [Button(text="Занятие 1. 11:45 - 13:15", source=States.DAY_3ND_2_LES)],
+                [Button(text="Занятие 2. 14:00 - 15:30", source=States.DAY_3ND_3_LES)],
+                [Button(text="Бонус. 15:45 - 17:00", source=States.DAY_3ND_4_LES)],
+                [Button(text="Вечеринка 19:00 - 00:00", source=States.DAY_3ND_PARTY)],
                 [daily_button],
                 [menu_button],
             ],
         )
     ),
-    States.SCHEDULE_TEMP_THIRD_DAY: Event(
-        Text(
-            text="Скоро будет описание",
+    States.DAY_3ND_1_LES: Event(
+        Image(
+            path="schedule-yoga.jpg",
+            caption="Йога с Леонидом Несовым \n"
+            "<i>Воскресенье, 10:00-11:30</i>\n\n"
+            "Зал: BH - Big Hall \n"
+            "Приходите, разомнемся после бодрой субботы и подготовимся к насыщенному воскресенью!",
             keyboard=[
-                [Button(text="Назад  ↩️", source=States.THIRD_DAY)],
+                [back_to_day_3nd],
                 [daily_button],
                 [menu_button],
             ],
         )
     ),
-    States.SCHEDULE_PARTY_THIRD_DAY: Event(
+    States.DAY_3ND_2_LES: Event(
+        Text(
+            text="<b>Занятие 2. 11:45-13:15</b>\n\nВыбери уровень 👇",
+            keyboard=[
+                [Button(text="Beginner", source=States.DAY_3ND_2_LES_BEG)],
+                [Button(text="Intermediate", source=States.DAY_3ND_2_LES_INT)],
+                [back_to_day_3nd],
+                [daily_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_2_LES_BEG: Event(
+        Image(
+            path="schedule-roma-sasha.jpg",
+            caption="<b>Роман Андреев и Александра Метелькова</b>\n"
+            "<i>Воскресенье, 24 августа, 11:45-13:15</i>\n\n"
+            "Уровень: Beginner\n"
+            "Зал: BH - Big Hall\n"
+            "Тема: Отдыхаем в танце: ведомые проходки в паре",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_3ND_2_LES)],
+                [day_3nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_2_LES_INT: Event(
+        Image(
+            path="schedule-igor-olya.jpg",
+            caption="<b>Игорь и Ольга Кузнецовы</b>\n"
+            "<i>Воскресенье, 24 августа, 11:45-13:15</i>\n\n"
+            "Уровень: Intermediate\n"
+            "Зал: NY - New York\n"
+            "Тема: Минишоукейс",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_3ND_2_LES)],
+                [day_3nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_3_LES: Event(
+        Text(
+            text="<b>Занятие 3. 14:00 - 15:30</b>\n\nВыбери свой уровень 👇",
+            keyboard=[
+                [Button(text="Intermediate", source=States.DAY_3ND_3_LES_INT)],
+                [Button(text="Advanced", source=States.DAY_3ND_3_LES_ADV)],
+                [back_to_day_3nd],
+                [daily_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_3_LES_INT: Event(
+        Image(
+            path="schedule-roma-sasha.jpg",
+            caption="<b>Роман Андреев и Александра Метелькова</b>\n"
+            "<i>Воскресенье, 24 августа, 14:00-15:30</i>\n\n"
+            "Уровень: Intermediate\n"
+            "Зал: BH - Big Hall\n"
+            "Тема: Комфортные переходы между фигурами на примере танцевальной связки",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_3ND_3_LES)],
+                [day_3nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_3_LES_ADV: Event(
+        Image(
+            path="schedule-lenya-liza.jpg",
+            caption="<b>Леонид Несов и Елизавета Козуб</b>\n"
+            "<i>Воскресенье, 24 августа, 14:00-15:30</i>\n\n"
+            "Уровень: Advanced\n"
+            "Зал: NY - New York\n"
+            "Тема: Вариации на усовершенствование ведения-следования",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_3ND_3_LES)],
+                [day_3nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_4_LES: Event(
+        Text(
+            text="<b>Бонус. 16:30 - 18:00</b>\n\nВыбери занятие 👇",
+            keyboard=[
+                [Button(text="Бонус: Музыкальность", source=States.DAY_3ND_4_LES_ADV)],
+                [Button(text="Бонус: Слоу", source=States.DAY_3ND_4_LES_BONUS)],
+                [back_to_day_3nd],
+                [daily_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_4_LES_ADV: Event(
+        Image(
+            path="schedule-roma-sasha.jpg",
+            caption="<b>Роман Андреев и Александра Метелькова</b>\n"
+            "<i>Воскресенье, 24 августа, 16:30-18:00</i>\n\n"
+            "Уровень: Любой\n"
+            "Зал: BH - Big Hall\n"
+            "Тема: Музыкальность без счетов: что можно услышать в музыке",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_3ND_4_LES)],
+                [day_3nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_4_LES_BONUS: Event(
+        Image(
+            path="schedule-anton-katya.jpg",
+            caption="<b>Антон Матвеев и Екатерина Громова</b>\n"
+            "<i>Воскресенье, 24 августа, 16:30-18:00</i>\n\n"
+            "Уровень: Любой\n"
+            "Зал: NY - New York\n"
+            "Тема: Слоу",
+            keyboard=[
+                [Button(text="Назад  ↩️", source=States.DAY_3ND_4_LES)],
+                [day_3nd_button],
+                [menu_button],
+            ],
+        )
+    ),
+    States.DAY_3ND_PARTY: Event(
         Image(
             path="schedule-party-second.jpg",
             caption="<i>19:00-00:00</i>\n"
@@ -249,15 +486,10 @@ SCHEDULE_MESSAGES = {
             "<b>Тематическая вечеринка</b>\n\n"
             "Тема вечеринки: пижама party 😴 🌒. У вас есть время выбрать или найти самую любимую пижаму 😏\n\n"
             "<b>Расписание вечеринки и диджеев</b>\n\n"
-            "19:00-00:00 Уточняется\n",
+            "19:00-00:00 Расписание уточняется\n",
             keyboard=[
-                [Button(text="Назад  ↩️", source=States.THIRD_DAY)],
-                [
-                    Button(
-                        text="О месте вечеринки",
-                        source=States.SCHEDULE_LOCATION_PARTY_THIRD_DAY,
-                    )
-                ],
+                [back_to_day_3nd],
+                [Button(text="О месте вечеринки", source=States.DAY_3ND_LOC_PARTY)],
                 [daily_button],
                 [menu_button],
             ],
@@ -273,10 +505,10 @@ SCHEDULE_MESSAGES = {
             "пришло время познакомиться с ней бугерам со всей страны 😉",
         ),
     ),
-    States.SCHEDULE_LOCATION_PARTY_THIRD_DAY: PARTY_EVENT.copy_and_set_kb(
+    States.DAY_3ND_LOC_PARTY: PARTY_EVENT.copy_and_set_kb(
         number_message=0,
         keyboard=[
-            [Button(text="Назад  ↩️", source=States.SCHEDULE_PARTY_THIRD_DAY)],
+            [Button(text="Назад  ↩️", source=States.DAY_3ND_PARTY)],
             [daily_button],
             [menu_button],
         ],

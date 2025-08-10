@@ -11,7 +11,7 @@ OPEN_AIR_EVENT = Event(
         "<b>Как найти? См. фото и видео ниже👇</b>",
     ),
     Image(path="location-open-air-map.png"),
-    Video(path="location-openair.MOV"),
+    Video(path="location-open-air.mp4"),
 )
 
 
@@ -38,14 +38,19 @@ LOCATION_MESSAGES = {
         Text(
             text="Выбери место из списка ниже👇",
             keyboard=[
-                [Button(text='МК - Студия "Social Dance Studio"', source=States.SDS)],
+                [
+                    Button(
+                        text='МК - Студия "Social Dance Studio"',
+                        source=States.LOCATION_SDS,
+                    )
+                ],
                 [Button(text="Open-air, 22 августа", source=States.LOCATION_OPENAIR)],
-                [Button(text="Вечеринки", source=States.PARTY)],
+                [Button(text="Вечеринки", source=States.LOCATION_PARTY)],
                 [menu_button],
             ],
         )
     ),
-    States.SDS: Event(
+    States.LOCATION_SDS: Event(
         Image(
             path="location-sds.png",
             caption='<b>Студия "Social Dance Studio"</b>\n\n'
@@ -79,7 +84,7 @@ LOCATION_MESSAGES = {
             [menu_button],
         ],
     ),
-    States.PARTY: PARTY_EVENT.copy_and_set_kb(
+    States.LOCATION_PARTY: PARTY_EVENT.copy_and_set_kb(
         number_message=0,
         keyboard=[
             [Button(text="Назад  ↩️", source=States.LOCATION)],
