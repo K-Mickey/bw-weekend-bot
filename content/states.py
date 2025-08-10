@@ -28,6 +28,6 @@ class States(StrEnum):
     PARTY = "location-party"
     LOCATION_OPENAIR = "location-openair"
 
-    NEWS = "news"
+    LEVELS = "levels"
     CHAT = "chat"
     CONTACTS = "contacts"

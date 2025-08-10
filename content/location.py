@@ -11,6 +11,7 @@ OPEN_AIR_EVENT = Event(
         "<b>Как найти? См. фото и видео ниже👇</b>",
     ),
     Image(path="location-open-air-map.png"),
+    Video(path="location-openair.MOV"),
 )
 
 
