@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
@@ -6,6 +8,7 @@ from aiogram.types import Message
 from content import States, MESSAGES
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
 @router.message(CommandStart())
@@ -27,13 +30,20 @@ async def cmd_help(message: Message):
 async def check_answer(message: Message, state: FSMContext):
     state_data = await state.get_data()
     if not (current_state := state_data.get("state")):
+        logger.debug(
+            f"User {message.from_user.id} has no state and start with state {States.START}"
+        )
         await state.update_data(state=States.START)
 
     elif event := MESSAGES.get(current_state):
         if button := event.get_button(message.text):
+            logger.debug(
+                f"User {message.from_user.id} click button {button.text} and go to state {button.source}"
+            )
             await state.update_data(state=button.source)
 
     else:
+        logger.warning(f"User {message.from_user.id} has wrong state {current_state}")
         await state.update_data(state=States.DEFAULT)
 
     await send_event(message, state)
@@ -42,6 +52,7 @@ async def check_answer(message: Message, state: FSMContext):
 async def send_event(message: Message, state: FSMContext):
     state_data = await state.get_data()
     current_state = state_data.get("state")
+    logger.debug(f"User {message.from_user.id} in state {current_state}")
     event = MESSAGES.get(current_state)
     for message_content in event.messages:
         await message_content.answer(message)
