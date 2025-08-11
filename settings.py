@@ -13,8 +13,9 @@ class Settings(BaseSettings):
     web_server_host: str = "0.0.0.0"
     web_server_port: int = 8000
 
+    redis_url: str = "redis://localhost:6379/0"
+
     base_path: Path = Path.cwd()
-    db_path: Path = base_path / "src/bot.sqlite3"
     img_path: Path = base_path / "src/images"
     video_path: Path = base_path / "src/videos"
 
@@ -23,10 +24,6 @@ class Settings(BaseSettings):
     log_path: Path = base_path / "src/logs"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-
-    @property
-    def user_ids(self) -> list[int]:
-        return [int(x) for x in self.user_str_ids.split(",")]
 
 
 settings = Settings()
