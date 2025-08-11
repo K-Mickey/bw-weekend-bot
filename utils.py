@@ -1,9 +1,12 @@
 import copy
+import logging
 from abc import ABC, abstractmethod
 
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, FSInputFile
 
 from settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 class Button:
@@ -67,6 +70,8 @@ class Text(MessageContent):
 
 
 class Image(MessageContent):
+    file_id = None
+
     def __init__(
         self, path: str, caption: str = "", keyboard: list[list[Button]] = None
     ):
@@ -76,12 +81,22 @@ class Image(MessageContent):
 
     async def answer(self, message: Message):
         kb = self.create_kb()
-        img = FSInputFile(settings.img_path / self.path)
         caption = self.caption if self.caption else None
-        await message.answer_photo(photo=img, caption=caption, reply_markup=kb)
+
+        try:
+            await message.answer_photo(
+                photo=self.file_id, caption=caption, reply_markup=kb
+            )
+        except Exception:
+            img = FSInputFile(settings.img_path / self.path)
+            await message.answer_photo(photo=img, caption=caption, reply_markup=kb)
+            self.file_id = message.photo[-1].file_id
+            logger.warning(f"Image saved with id {self.file_id}")
 
 
 class Video(MessageContent):
+    file_id = None
+
     def __init__(
         self, path: str, caption: str = "", keyboard: list[list[Button]] = None
     ):
@@ -91,6 +106,16 @@ class Video(MessageContent):
 
     async def answer(self, message: Message):
         kb = self.create_kb()
-        video = FSInputFile(settings.video_path / self.path)
         caption = self.caption if self.caption else None
-        await message.answer_video(video=video, caption=caption, reply_markup=kb)
+
+        try:
+            await message.answer_video(
+                video=self.file_id, caption=caption, reply_markup=kb
+            )
+        except Exception:
+            video = FSInputFile(settings.video_path / self.path)
+            video_message = await message.answer_video(
+                video=video, caption=caption, reply_markup=kb
+            )
+            self.file_id = video_message.video.file_id
+            logger.warning(f"Video saved with id {self.file_id}")
