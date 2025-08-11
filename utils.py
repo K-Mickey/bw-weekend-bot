@@ -87,10 +87,13 @@ class Image(MessageContent):
             await message.answer_photo(
                 photo=self.file_id, caption=caption, reply_markup=kb
             )
+            logger.debug(f"Image sent with id {self.file_id}")
         except Exception:
             img = FSInputFile(settings.img_path / self.path)
-            await message.answer_photo(photo=img, caption=caption, reply_markup=kb)
-            self.file_id = message.photo[-1].file_id
+            image_message = await message.answer_photo(
+                photo=img, caption=caption, reply_markup=kb
+            )
+            self.file_id = image_message.photo[-1].file_id
             logger.warning(f"Image saved with id {self.file_id}")
 
 
@@ -112,6 +115,7 @@ class Video(MessageContent):
             await message.answer_video(
                 video=self.file_id, caption=caption, reply_markup=kb
             )
+            logger.debug(f"Video sent with id {self.file_id}")
         except Exception:
             video = FSInputFile(settings.video_path / self.path)
             video_message = await message.answer_video(
