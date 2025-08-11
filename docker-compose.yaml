@@ -12,3 +12,9 @@ services:
         limits:
           cpus: '1.0'
           memory: 512M
+    networks:
+      - redis-private-net
+
+networks:
+  redis-private-net:
+    external: true
