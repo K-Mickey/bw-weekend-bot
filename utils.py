@@ -94,7 +94,7 @@ class Image(MessageContent):
                 photo=img, caption=caption, reply_markup=kb
             )
             self.file_id = image_message.photo[-1].file_id
-            logger.warning(f"Image saved with id {self.file_id}")
+            logger.info(f"Image saved with id {self.file_id}")
 
 
 class Video(MessageContent):
@@ -122,4 +122,4 @@ class Video(MessageContent):
                 video=video, caption=caption, reply_markup=kb
             )
             self.file_id = video_message.video.file_id
-            logger.warning(f"Video saved with id {self.file_id}")
+            logger.info(f"Video saved with id {self.file_id}")
