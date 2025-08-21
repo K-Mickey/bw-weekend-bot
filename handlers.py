@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.update_data(state=States.START)
-    logger.warning(f"User {message.from_user.id} start bot")
+    logger.warning(
+        f"User {message.from_user.id}: {message.from_user.full_name} start bot"
+    )
     await send_event(message, state)
 
 
