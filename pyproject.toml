@@ -1,0 +1,26 @@
+[project]
+name = "bw-weekend-bot"
+version = "0.1.0"
+description = "Bot for BW Weekend festival"
+authors = [{name = "Kokuev Mikhail"}]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ruamel-yaml>=0.19.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "ruff>=0.15.12",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+preview = true
+select = ["E", "F", "I", "C90"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
