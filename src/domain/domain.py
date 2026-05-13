@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import List, Mapping, TypeAlias
+from typing import Mapping, TypeAlias
 
 from pydantic import BaseModel, Field
 
@@ -36,11 +36,11 @@ MediaItem: TypeAlias = PhotoNode | VideoNode | TextNode
 
 class PostNode(BaseModel):
     id: str = Field(...)
-    keyboard: List[List[KeyboardButton]] | None = None
-    media: List[MediaItem] | None = None
+    keyboard: list[list[KeyboardButton]] | None = None
+    media: list[MediaItem] | None = None
     available_from: datetime | None = None
     available_to: datetime | None = None
-    flags: List[str] | None = None
+    flags: list[str] | None = None
 
 
 def node_factory(raw: Mapping) -> BaseModel:
@@ -55,4 +55,4 @@ def node_factory(raw: Mapping) -> BaseModel:
         case NodeKind.TEXT:
             return TextNode(**raw)
         case _:
-            raise ValueError(f"Unsupported node type: {raw.get('type')}")
+            raise ValueError(f"Unsupported node type: {kind}")
