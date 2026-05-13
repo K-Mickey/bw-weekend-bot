@@ -1,11 +1,10 @@
 import logging
 
 from aiogram import Router
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-
-from content import States, MESSAGES
+from content import MESSAGES, States
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -14,9 +13,7 @@ logger = logging.getLogger(__name__)
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.update_data(state=States.START)
-    logger.warning(
-        f"User {message.from_user.id}: {message.from_user.full_name} start bot"
-    )
+    logger.warning(f"User {message.from_user.id}: {message.from_user.full_name} start bot")
     await send_event(message, state)
 
 
@@ -34,18 +31,14 @@ async def check_answer(message: Message, state: FSMContext):
     state_data = await state.get_data()
     try:
         if not (current_state := state_data.get("state")):
-            logger.debug(
-                f"User {message.from_user.id} has no state and start with state {States.START}"
-            )
+            logger.debug(f"User {message.from_user.id} has no state and start with state {States.START}")
             await state.update_data(state=States.START)
             await send_event(message, state)
 
         else:
             event = MESSAGES.get(current_state)
             if button := event.get_button(message.text):
-                logger.debug(
-                    f"User {message.from_user.id} click button {button.text} and go to state {button.source}"
-                )
+                logger.debug(f"User {message.from_user.id} click button {button.text} and go to state {button.source}")
                 await state.update_data(state=button.source)
             await send_event(message, state)
 

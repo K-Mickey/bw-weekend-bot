@@ -2,8 +2,7 @@ import copy
 import logging
 from abc import ABC, abstractmethod
 
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, FSInputFile
-
+from aiogram.types import FSInputFile, KeyboardButton, Message, ReplyKeyboardMarkup
 from settings import settings
 
 logger = logging.getLogger(__name__)
@@ -46,10 +45,7 @@ class ButtonMixin:
             return None
 
         return ReplyKeyboardMarkup(
-            keyboard=[
-                [KeyboardButton(text=text.text) for text in row]
-                for row in self.keyboard
-            ],
+            keyboard=[[KeyboardButton(text=text.text) for text in row] for row in self.keyboard],
             resize_keyboard=True,
         )
 
@@ -72,9 +68,7 @@ class Text(MessageContent):
 class Image(MessageContent):
     file_id = None
 
-    def __init__(
-        self, path: str, caption: str = "", keyboard: list[list[Button]] = None
-    ):
+    def __init__(self, path: str, caption: str = "", keyboard: list[list[Button]] = None):
         self.path = path
         self.caption = caption
         self.keyboard = keyboard or []
@@ -84,15 +78,11 @@ class Image(MessageContent):
         caption = self.caption if self.caption else None
 
         try:
-            await message.answer_photo(
-                photo=self.file_id, caption=caption, reply_markup=kb
-            )
+            await message.answer_photo(photo=self.file_id, caption=caption, reply_markup=kb)
             logger.debug(f"Image sent with id {self.file_id}")
         except Exception:
             img = FSInputFile(settings.img_path / self.path)
-            image_message = await message.answer_photo(
-                photo=img, caption=caption, reply_markup=kb
-            )
+            image_message = await message.answer_photo(photo=img, caption=caption, reply_markup=kb)
             self.file_id = image_message.photo[-1].file_id
             logger.info(f"Image saved with id {self.file_id}")
 
@@ -100,9 +90,7 @@ class Image(MessageContent):
 class Video(MessageContent):
     file_id = None
 
-    def __init__(
-        self, path: str, caption: str = "", keyboard: list[list[Button]] = None
-    ):
+    def __init__(self, path: str, caption: str = "", keyboard: list[list[Button]] = None):
         self.path = path
         self.caption = caption
         self.keyboard = keyboard or []
@@ -112,14 +100,10 @@ class Video(MessageContent):
         caption = self.caption if self.caption else None
 
         try:
-            await message.answer_video(
-                video=self.file_id, caption=caption, reply_markup=kb
-            )
+            await message.answer_video(video=self.file_id, caption=caption, reply_markup=kb)
             logger.debug(f"Video sent with id {self.file_id}")
         except Exception:
             video = FSInputFile(settings.video_path / self.path)
-            video_message = await message.answer_video(
-                video=video, caption=caption, reply_markup=kb
-            )
+            video_message = await message.answer_video(video=video, caption=caption, reply_markup=kb)
             self.file_id = video_message.video.file_id
             logger.info(f"Video saved with id {self.file_id}")

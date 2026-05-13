@@ -12,9 +12,7 @@ if __name__ == "__main__":
     )
 
     parser = argparse.ArgumentParser(description="Bot for budget")
-    parser.add_argument(
-        "--local", action="store_true", default=False, help="Run bot in local mode"
-    )
+    parser.add_argument("--local", action="store_true", default=False, help="Run bot in local mode")
     args = parser.parse_args()
 
     paths = (settings.log_path,)
