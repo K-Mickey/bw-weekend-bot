@@ -7,7 +7,6 @@ from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import BotCommand
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
-
 from handlers import router
 from settings import settings
 

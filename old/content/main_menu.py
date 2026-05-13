@@ -1,6 +1,6 @@
-from .states import States
-from utils import Event, Button, Text, Image
+from utils import Button, Event, Image, Text
 
+from .states import States
 
 menu_button = Button(text="Главное меню 🏠", source=States.START)
 

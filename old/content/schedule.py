@@ -1,7 +1,8 @@
+from utils import Button, Event, Image, Text
+
 from .location import OPEN_AIR_EVENT, PARTY_EVENT
-from .states import States
 from .main_menu import menu_button
-from utils import Event, Image, Button, Text
+from .states import States
 
 daily_button = Button(text="Расписание по дням", source=States.SCHEDULE)
 day_2nd_button = Button(text="Другие занятия", source=States.DAY_2ND)

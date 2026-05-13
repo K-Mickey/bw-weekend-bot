@@ -1,6 +1,7 @@
-from .states import States
+from utils import Button, Event, Image, Text, Video
+
 from .main_menu import menu_button
-from utils import Event, Button, Text, Video, Image
+from .states import States
 
 OPEN_AIR_EVENT = Event(
     Image(
