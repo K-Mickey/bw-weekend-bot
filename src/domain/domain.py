@@ -15,19 +15,47 @@ class KeyboardButton(BaseModel):
     text: str = Field(...)
     target: str = Field(...)
 
+    @field_validator("text")
+    @classmethod
+    def truncate_long_text(cls, v: str) -> str:
+        if len(v) > 35:
+            return f"{v[:32]}..."
+        return v
+
 
 class PhotoNode(BaseModel):
     url: str = Field(...)
     description: str | None = None
+
+    @field_validator("description")
+    @classmethod
+    def check_description_length(cls, v: str | None) -> str | None:
+        if v is not None and len(v) > 1024:
+            raise ValueError("description length must not exceed 1024 characters")
+        return v
 
 
 class VideoNode(BaseModel):
     url: str = Field(...)
     description: str | None = None
 
+    @field_validator("description")
+    @classmethod
+    def check_description_length(cls, v: str | None) -> str | None:
+        if v is not None and len(v) > 1024:
+            raise ValueError("description length must not exceed 1024 characters")
+        return v
+
 
 class TextNode(BaseModel):
     text: str = Field(...)
+
+    @field_validator("text")
+    @classmethod
+    def check_max_length(cls, v: str) -> str:
+        if len(v) > 4096:
+            raise ValueError("text length must not exceed 4096 characters")
+        return v
 
 
 MediaItem: TypeAlias = PhotoNode | VideoNode | TextNode
@@ -35,10 +63,18 @@ MediaItem: TypeAlias = PhotoNode | VideoNode | TextNode
 
 class PostNode(BaseModel):
     id: str = Field(...)
-    media: list[MediaItem] | None = None
+    media: list[MediaItem] = Field(...)
     available_from: datetime | None = None
     available_to: datetime | None = None
     flags: list[str] | None = None
+
+    @field_validator("available_to")
+    @classmethod
+    def check_dates(cls, v: datetime | None, values):
+        from_date = values.get("available_from")
+        if v and from_date and v <= from_date:
+            raise ValueError("available_to must be greater than available_from")
+        return v
 
     @classmethod
     def _parse_media_item(cls, raw: Mapping) -> MediaItem:
@@ -54,52 +90,41 @@ class PostNode(BaseModel):
                 raise ValueError(f"Unsupported media type: {kind}")
 
     @classmethod
-    def _parse_media_list(cls, raw_list: list[Mapping] | None) -> list[MediaItem] | None:
+    def _parse_media_list(cls, raw_list: list[Mapping] | None) -> list[MediaItem]:
         if not raw_list:
-            return None
+            return []
         return [cls._parse_media_item(item) for item in raw_list]
 
     @field_validator("media", mode="before")
     @classmethod
-    def validate_media(cls, v):
-        return cls._parse_media_list(v)
+    def media_validator(cls, v: list[Mapping] | None):
+        if not v:
+            return []
+        parsed = cls._parse_media_list(v)
+        has_text = any(isinstance(item, TextNode) for item in parsed)
+        has_media = any(isinstance(item, (PhotoNode, VideoNode)) for item in parsed)
+        if has_text and has_media:
+            raise ValueError("PostNode cannot contain TextNode together with PhotoNode or VideoNode")
+        return parsed
+
+
+class MenuNodeFlag(StrEnum):
+    IS_BACK = "is_back"
+    IS_MAIN = "is_main"
 
 
 class MenuNode(BaseModel):
     id: str = Field(...)
     content: PostNode = Field(...)
-    keyboard: list[list[KeyboardButton]]
-    flags: list[str] | None = None
-
-    @field_validator("keyboard", mode="before")
-    @classmethod
-    def ensure_keyboard(cls, v):
-        # Accept both list of list of dicts and already parsed KeyboardButton objects
-        if not v:
-            raise ValueError("keyboard must contain at least one row")
-        # If inner items are dicts, pydantic will convert them automatically when returning
-        return v
+    keyboard: list[list[KeyboardButton]] = Field(default_factory=list)
+    flags: list[MenuNodeFlag] | None = None
 
 
 def node_factory(raw: Mapping) -> BaseModel:
-    """Factory that decides which domain object to instantiate.
-    - Presence of ``keyboard`` → MenuNode (expects a nested ``content`` dict).
-    - Presence of ``media``   → PostNode.
-    - Otherwise, treat as a media item (photo, video, text).
-    """
-    if "keyboard" in raw:
-        # ``content`` will be parsed by pydantic as PostNode using its validators
-        return MenuNode(**raw)
-    if "media" in raw:
-        return PostNode(**raw)
-    # Media item case
-    kind = NodeKind(raw["type"])
-    match kind:
-        case NodeKind.PHOTO:
-            return PhotoNode(**raw)
-        case NodeKind.VIDEO:
-            return VideoNode(**raw)
-        case NodeKind.TEXT:
-            return TextNode(**raw)
+    match raw:
+        case {"keyboard": _}:
+            return MenuNode(**raw)
+        case {"media": _}:
+            return PostNode(**raw)
         case _:
-            raise ValueError(f"Unsupported node type: {kind}")
+            raise ValueError("Invalid node")
