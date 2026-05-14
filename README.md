@@ -3,6 +3,7 @@
 [![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-light.svg)](https://sonarcloud.io/summary/new_code?id=K-Mickey_bw-weekend-bot)
 
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=K-Mickey_bw-weekend-bot&metric=coverage&token=8582e500f512283b1ec011c7259e2f30b3c64acb)](https://sonarcloud.io/summary/new_code?id=K-Mickey_bw-weekend-bot)
+[![Python CI](https://github.com/K-Mickey/bw-weekend-bot/actions/workflows/pyci.yml/badge.svg)](https://github.com/K-Mickey/bw-weekend-bot/actions/workflows/pyci.yml)
 
 ## Overview
 A multi‑platform (Telegram + VK) informational bot that delivers up‑to‑date content about the **BW Weekend** festival. The bot is built with a clean‑architecture, domain‑driven design and a data‑driven content model, allowing non‑technical editors to add or update posts without touching code.
