@@ -108,19 +108,20 @@ class PostNode(BaseModel):
         return parsed
 
 
-class MenuNodeFlag(StrEnum):
-    IS_BACK = "is_back"
-    IS_MAIN = "is_main"
+class MenuNodeFlags(BaseModel):
+    is_back: bool = True
+    is_main: bool = True
+    build: bool = True
 
 
 class MenuNode(BaseModel):
     id: str = Field(...)
-    content: PostNode = Field(...)
+    content: list[PostNode] = Field(...)
     keyboard: list[list[KeyboardButton]] = Field(default_factory=list)
-    flags: list[MenuNodeFlag] | None = None
+    flags: MenuNodeFlags = Field(default_factory=MenuNodeFlags)
 
 
-def node_factory(raw: Mapping) -> BaseModel:
+def node_factory(raw: dict) -> BaseModel:
     match raw:
         case {"keyboard": _}:
             return MenuNode(**raw)
