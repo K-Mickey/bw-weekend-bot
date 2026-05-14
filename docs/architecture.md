@@ -3,7 +3,7 @@
 ## 1. Слои
 - **Presentation (Adapters)** – `telegram_adapter.py`, `vk_adapter.py`.
 - **Application (Use‑cases)** – `get_content.py`, `navigate.py`, `record_interaction.py`.
-- **Domain (Entities, Value Objects, Services)** – все бизнес‑сущности находятся в едином модуле `src/domain/domain.py`.  Он содержит базовый класс ``ContentNode`` с общей валидацией, конкретные типы ``PostNode``, ``PhotoNode``, ``VideoNode`` и ``TextNode``, а также вспомогательные value‑object‑ы (``Media``, ``KeyboardButton``) и фабрику ``node_factory``.
+- **Domain (Entities, Value Objects, Services)** – все бизнес‑сущности находятся в едином модуле `src/domain/domain.py`.  Он содержит базовый класс ``ContentNode`` с общей валидацией, типы ``MenuNode`` (новый), ``PostNode`` (без клавиатуры), ``PhotoNode``, ``VideoNode`` и ``TextNode``, а также вспомогательные value‑object‑ы (``Media``, ``KeyboardButton``) и фабрику ``node_factory``.
 - **Infrastructure (Gateways)** – `content_repository.py`, `state_store.py`, `logger.py`, `metrics.py`.
 
 ## 2. Диаграмма
