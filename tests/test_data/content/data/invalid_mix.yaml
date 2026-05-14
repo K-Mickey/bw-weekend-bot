@@ -1,0 +1,9 @@
+id: menu_bad
+content:
+  - id: post_bad
+    media:
+      - type: text
+        text: Hello
+      - type: photo
+        url: http://example.com/img.png
+keyboard: []

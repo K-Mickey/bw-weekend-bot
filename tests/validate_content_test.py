@@ -1,55 +1,102 @@
+import shutil
 from pathlib import Path
+from typing import Callable, Union
 
 import pytest
+from ruamel.yaml import YAML
 
 from scripts.validate_content import (
-    check_available_from_dates,
+    check_domain_objects,
     check_node_ids,
     check_target_exists,
     get_files,
     load_files,
+    main,
 )
 
 
+@pytest.fixture(scope="session")
+def root_dir() -> Path:
+    return Path(__file__).parent / "test_data"
+
+
+@pytest.fixture(scope="session")
+def yaml_dir(root_dir) -> Path:
+    return root_dir / "content" / "data"
+
+
+def load_yaml(path: Path) -> Union[dict, list]:
+    yaml = YAML(typ="safe")
+    with path.open("r", encoding="utf-8") as f:
+        return yaml.load(f)
+
+
 @pytest.fixture
-def yaml_file(tmp_path: Path) -> Path:
-    data_dir = tmp_path / "content" / "data"
-    data_dir.mkdir(parents=True)
-    p = data_dir / "test.yaml"
-    p.write_text("id: test\nvalue: 42", encoding="utf-8")
-    return p
+def copy_yaml_to_tmp(tmp_path: Path) -> Callable[[list[Path]], Path]:
+    def _inner(sources: list[Path]) -> Path:
+        dest_root = tmp_path / "content" / "data"
+        dest_root.mkdir(parents=True, exist_ok=True)
+        for src in sources:
+            shutil.copy(src, dest_root / src.name)
+        return tmp_path
+
+    return _inner
 
 
-def test_get_files(tmp_path: Path, yaml_file: Path):
-    files = get_files(tmp_path)
-    assert yaml_file in files
+def test_get_files(root_dir: Path, yaml_dir: Path):
+    files = get_files(root_dir)
+    expected_count = len(list(yaml_dir.glob("*.yaml")))
+    assert len(files) == expected_count
 
 
-def test_check_node_ids(tmp_path: Path):
-    nodes = [{"id": "a"}, {"id": "b"}]
-    assert check_node_ids(tuple(nodes)) == 0
-    nodes_dup = [{"id": "a"}, {"id": "a"}]
-    assert check_node_ids(tuple(nodes_dup)) == 1
+def test_load_files(root_dir: Path):
+    files = get_files(root_dir)
+    loaded = load_files(files)
+    assert len(loaded) == len(files)
+    for data in loaded:
+        assert isinstance(data, (dict, list))
 
 
-def test_check_target_exists(tmp_path: Path):
-    nodes = [{"id": "a", "keyboard": [{"target": "b"}]}, {"id": "b"}]
-    assert check_target_exists(tuple(nodes)) == 0
-    nodes_bad = [{"id": "a", "keyboard": [{"target": "c"}]}]
-    assert check_target_exists(tuple(nodes_bad)) == 1
+def test_check_node_ids_success(yaml_dir: Path):
+    nodes_list = load_yaml(yaml_dir / "node_ids_ok.yaml")
+    assert check_node_ids(tuple(nodes_list)) == 0
 
 
-def test_check_available_from_dates(tmp_path: Path):
-    nodes = [{"id": "a", "available_from": "2023-01-01"}]
-    assert check_available_from_dates(tuple(nodes)) == 0
-    nodes_bad = [{"id": "b", "available_from": "not-a-date"}]
-    assert check_available_from_dates(tuple(nodes_bad)) == 1
+def test_check_node_ids_failure(yaml_dir: Path):
+    nodes_list = load_yaml(yaml_dir / "node_ids_dup.yaml")
+    assert check_node_ids(tuple(nodes_list)) == 1
 
 
-def test_load_files(tmp_path: Path, yaml_file: Path):
-    yaml_paths = get_files(tmp_path)
-    loaded = load_files(yaml_paths)
+def test_check_target_exists_success(yaml_dir: Path):
+    nodes_list = load_yaml(yaml_dir / "target_ok.yaml")
+    assert check_target_exists(tuple(nodes_list)) == 0
 
-    file = loaded[0]
-    assert "test" in file.get("id")
-    assert file.get("value") == 42
+
+def test_check_target_exists_failure(yaml_dir: Path):
+    nodes = [{"id": "a", "keyboard": [{"target": "c"}]}]
+    assert check_target_exists(tuple(nodes)) == 1
+
+
+def test_check_domain_objects_success(yaml_dir: Path):
+    node = load_yaml(yaml_dir / "valid_menu.yaml")
+    assert check_domain_objects((node,)) == 0
+
+
+def test_check_domain_objects_failure(yaml_dir: Path):
+    node = load_yaml(yaml_dir / "invalid_mix.yaml")
+    assert check_domain_objects((node,)) == 1
+
+
+def test_main_success(yaml_dir: Path, copy_yaml_to_tmp):
+    project_root = copy_yaml_to_tmp([yaml_dir / "valid_menu.yaml"])
+    assert main(project_root) == 0
+
+
+def test_main_failure_duplicate_id(yaml_dir: Path, copy_yaml_to_tmp):
+    project_root = copy_yaml_to_tmp(
+        [
+            yaml_dir / "duplicate_a.yaml",
+            yaml_dir / "duplicate_b.yaml",
+        ]
+    )
+    assert main(project_root) == 1

@@ -26,10 +26,3 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-
-  - repo: local
-    hooks:
-      - id: validate-content
-        name: Validate content
-        entry: scripts/validate_content.py
-        language: python

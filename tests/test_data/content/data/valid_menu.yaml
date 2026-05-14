@@ -1,0 +1,7 @@
+id: menu_ok
+content:
+  - id: post_ok
+    media:
+      - type: text
+        text: Hello world
+keyboard: []

@@ -6,17 +6,20 @@ The script performs three independent checks on the YAML files placed in ``conte
 
 1. **Unique node IDs** – each file must contain an ``id`` field and the values must be unique.
 2. **Target existence** – every ``target`` referenced in a ``keyboard`` entry must point to an existing ``id``.
-3. **Valid ``available_from`` date** – when present, the value must be an ISO‑8601 date string.
+3. **Domain validation** – raw node dictionaries are built into domain objects via ``node_factory``;
+   any ``pydantic.ValidationError`` is counted as a validation error.
 
 The module is deliberately split into small, pure functions to make unit testing trivial.
 """
 
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
 
+from pydantic import ValidationError
 from ruamel.yaml import YAML
+
+from src.domain import node_factory
 
 log = logging.getLogger(__name__)
 
@@ -97,39 +100,29 @@ def check_target_exists(nodes: tuple[dict, ...]) -> int:
     return errors
 
 
-def check_available_from_dates(nodes: tuple[dict, ...]) -> int:
-    """Validate ISO‑8601 format of ``available_from`` values.
-    Returns the number of malformed dates.
+def check_domain_objects(nodes: tuple[dict, ...]) -> int:
+    """Instantiate domain objects via ``node_factory`` and count validation errors.
+    Any ``pydantic.ValidationError`` raised by the domain models is logged and
+    counted as a single error for the offending node.
     """
     errors = 0
-    for node in nodes:
-        af = node.get("available_from")
-        if af:
-            try:
-                datetime.fromisoformat(af)
-            except ValueError:
-                log.error(
-                    "Node `%s` has invalid `available_from` value `%s`",
-                    node.get("id"),
-                    af,
-                )
-                errors += 1
+    for raw in nodes:
+        try:
+            node_factory(raw)
+        except ValidationError as exc:
+            log.error(
+                "Domain validation failed for node `%s`: %s",
+                raw.get("id", "<no-id>"),
+                exc,
+            )
+            errors += 1
     return errors
 
 
-def main() -> int:
+def main(project_root: Path) -> int:
     """Run the full validation pipeline.
     Returns ``0`` on success, ``1`` when any validation error is found.
     """
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(levelname)s] %(message)s",
-    )
-
-    project_root = Path(__file__).parents[2]
-    if not project_root.exists():
-        log.error("Project root directory does not exist: %s", project_root)
-        return 0
     yaml_files = get_files(project_root)
     if not yaml_files:
         log.info("No yaml files found – nothing to validate.")
@@ -140,7 +133,7 @@ def main() -> int:
     total_errors = 0
     total_errors += check_node_ids(nodes)
     total_errors += check_target_exists(nodes)
-    total_errors += check_available_from_dates(nodes)
+    total_errors += check_domain_objects(nodes)
 
     if total_errors:
         log.error("%d validation error(s) found.", total_errors)
@@ -151,4 +144,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(levelname)s] %(message)s",
+    )
+    repo_root = Path(__file__).parents[1]
+    if repo_root.exists():
+        sys.exit(main(repo_root))
+    else:
+        log.error("Project root directory does not exist: %s", repo_root)

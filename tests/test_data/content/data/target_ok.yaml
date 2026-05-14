@@ -1,0 +1,4 @@
+- id: a
+  keyboard:
+    - target: b
+- id: b
