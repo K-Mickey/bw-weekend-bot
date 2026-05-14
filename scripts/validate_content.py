@@ -1,4 +1,3 @@
-#!/usr/bin/env -S uv run --script
 """
 Refactored content validation script.
 All user‑facing messages are in English and emitted through the standard logging module.
@@ -143,7 +142,7 @@ def main(project_root: Path) -> int:
         return 0
 
 
-if __name__ == "__main__":
+def run():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(levelname)s] %(message)s",
@@ -153,3 +152,7 @@ if __name__ == "__main__":
         sys.exit(main(repo_root))
     else:
         log.error("Project root directory does not exist: %s", repo_root)
+
+
+if __name__ == "__main__":
+    run()
