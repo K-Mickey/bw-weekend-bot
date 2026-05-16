@@ -9,7 +9,8 @@
 ```yaml
 id: main                 # уникальный id, обязательный для корневого узла
 content:                  # массив PostNode (может быть один элемент)
-  - media:
+  - id: post_welcome
+    media:
       - type: text
         text: Добро пожаловать в бот!
     available_from: "2025-01-01"

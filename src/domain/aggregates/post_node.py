@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Mapping, TypeAlias
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..entities.media.photo_node import PhotoNode
 from ..entities.media.text_node import TextNode
@@ -19,13 +19,11 @@ class PostNode(BaseModel):
     available_to: datetime | None = None
     flags: list[str] | None = None
 
-    @field_validator("available_to")
-    @classmethod
-    def check_dates(cls, v: datetime | None, values):
-        from_date = values.get("available_from")
-        if v and from_date and v <= from_date:
+    @model_validator(mode="after")
+    def check_dates(self):
+        if self.available_to and self.available_from and self.available_to <= self.available_from:
             raise ValueError("available_to must be greater than available_from")
-        return v
+        return self
 
     @classmethod
     def _parse_media_item(cls, raw: Mapping) -> MediaItem:
