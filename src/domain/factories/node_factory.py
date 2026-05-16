@@ -1,10 +1,9 @@
-from pydantic import BaseModel
-
+from ..aggregates import Content
 from ..aggregates.menu_node import MenuNode
 from ..aggregates.post_node import PostNode
 
 
-def node_factory(raw: dict) -> BaseModel:
+def node_factory(raw: dict) -> Content:
     match raw:
         case {"keyboard": _}:
             return MenuNode(**raw)

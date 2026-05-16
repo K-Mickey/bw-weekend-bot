@@ -20,7 +20,6 @@ def test_user_key_equality():
 
 def test_user_key_hashable():
     key = UserKey(Network.TELEGRAM, "123")
-    # Should be able to put in a set/dict as key
     s = {key}
     d = {key: "value"}
     assert key in s

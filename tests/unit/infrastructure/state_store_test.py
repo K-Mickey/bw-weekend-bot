@@ -8,13 +8,11 @@ from src.infrastructure.state_store.memory_store import InMemoryStateStore
 
 
 def test_state_store_is_abstract():
-    """Test that StateStore cannot be instantiated directly."""
     with pytest.raises(TypeError):
         StateStore()
 
 
 def test_in_memory_state_store_can_be_instantiated():
-    """Test that InMemoryStateStore can be instantiated."""
     store = InMemoryStateStore()
     assert isinstance(store, StateStore)
     assert isinstance(store, InMemoryStateStore)
@@ -28,7 +26,6 @@ def test_create_or_reset_sets_session():
     assert isinstance(session, UserSession)
     assert session.user_key == user_key
     assert session.history == [root_node_id]
-    # Ensure get_session returns the same object
     assert store.get_session(user_key) is session
 
 
@@ -55,17 +52,14 @@ def test_pop_node_removes_last_and_returns_it():
     store.create_or_reset(user_key, root)
     store.push_node(user_key, "a")
     store.push_node(user_key, "b")
-    # Pop should return "b"
     popped = store.pop_node(user_key)
     assert popped == "b"
     session = store.get_session(user_key)
     assert session.history == [root, "a"]
-    # Pop again
     popped2 = store.pop_node(user_key)
     assert popped2 == "a"
     session = store.get_session(user_key)
     assert session.history == [root]
-    # Pop when only root remains should return None
     popped3 = store.pop_node(user_key)
     assert popped3 is None
     session = store.get_session(user_key)
@@ -84,7 +78,7 @@ def test_clear_removes_session():
 def test_isolation_between_different_keys():
     store = InMemoryStateStore()
     key1 = UserKey(Network.TELEGRAM, "1")
-    key2 = UserKey(Network.VK, "1")  # same external id but different network
+    key2 = UserKey(Network.VK, "1")
     store.create_or_reset(key1, "root1")
     store.create_or_reset(key2, "root2")
     assert store.get_session(key1).history == ["root1"]

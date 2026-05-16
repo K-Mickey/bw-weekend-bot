@@ -45,6 +45,5 @@ def test_user_session_pop():
 def test_user_session_cannot_pop_below_root():
     key = UserKey(Network.VK, "user5")
     session = UserSession(user_key=key, root_node_id="base")
-    # Try to pop when only root exists
     assert session.pop() is None
     assert session.history == ["base"]
