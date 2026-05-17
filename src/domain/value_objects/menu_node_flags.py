@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class MenuNodeFlags(BaseModel):
-    is_back: bool = True
-    is_main: bool = True
-    build: bool = True
+    is_back: bool = Field(default=True)
+    is_main: bool = Field(default=True)
+    build: bool = Field(default=True)

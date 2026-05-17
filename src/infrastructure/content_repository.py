@@ -1,12 +1,13 @@
 import yaml
 
 from src.config import settings
+from src.domain.aggregates import Content
 from src.domain.factories.node_factory import node_factory
 
 
 class ContentRepository:
     @staticmethod
-    def get_node(node_id: str):
+    def get_node(node_id: str) -> Content | None:
         """
         Retrieve a content node by its ID.
         Returns None if the node is not found.
