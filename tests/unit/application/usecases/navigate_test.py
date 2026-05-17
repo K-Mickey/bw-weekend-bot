@@ -50,7 +50,7 @@ def test_navigate_forward():
         result = navigate(network, external_user_id, button_label)
 
         mock_store.push_node.assert_called_once_with(user_key, target_node_id)
-        mock_get_content.assert_called_once_with(target_node_id)
+        mock_get_content.assert_called_once_with(target_node_id, mock_session)
         assert result == mock_target_response
 
 
@@ -87,7 +87,7 @@ def test_navigate_back():
         result = navigate(network, external_user_id, button_label)
 
         mock_store.pop_node.assert_called_once_with(user_key)
-        mock_get_content.assert_called_once_with(expected_node_id)
+        mock_get_content.assert_called_once_with(expected_node_id, mock_session)
         assert result == mock_expected_response
 
 
@@ -118,7 +118,7 @@ def test_navigate_back_at_root():
         result = navigate(network, external_user_id, button_label)
 
         mock_store.pop_node.assert_called_once_with(user_key)
-        mock_get_content.assert_called_once_with(current_node_id)
+        mock_get_content.assert_called_once_with(current_node_id, mock_session)
         assert result == mock_response
 
 

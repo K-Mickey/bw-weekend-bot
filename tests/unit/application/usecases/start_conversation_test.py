@@ -6,6 +6,7 @@ from src.application.usecases.start_conversation import start_conversation
 from src.domain.aggregates import PostNode
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.user_key import UserKey
+from src.domain.value_objects.user_session import UserSession
 
 
 def test_start_conversation_creates_session_and_returns_content():
@@ -19,13 +20,14 @@ def test_start_conversation_creates_session_and_returns_content():
         patch("src.application.usecases.start_conversation.state_store") as mock_store,
         patch("src.application.usecases.start_conversation.get_content") as mock_get_content,
     ):
-        mock_store.create_or_reset.return_value = None
+        mock_session = UserSession(user_key=user_key, root_node_id=root_node_id)
+        mock_store.create_or_reset.return_value = mock_session
         mock_get_content.return_value = root_node
 
         result = start_conversation(network, external_user_id)
 
         mock_store.create_or_reset.assert_called_once_with(user_key, root_node_id)
-        mock_get_content.assert_called_once_with(root_node_id)
+        mock_get_content.assert_called_once_with(root_node_id, mock_session)
         assert result == root_node
 
 

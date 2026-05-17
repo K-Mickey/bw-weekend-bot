@@ -16,13 +16,11 @@ class InMemoryStateStore(StateStore):
         return session
 
     def push_node(self, user_key: UserKey, node_id: str) -> None:
-        session = self._sessions.get(user_key)
-        if session:
+        if session := self.get_session(user_key):
             session.push(node_id)
 
     def pop_node(self, user_key: UserKey) -> str | None:
-        session = self._sessions.get(user_key)
-        if session:
+        if session := self.get_session(user_key):
             return session.pop()
         return None
 

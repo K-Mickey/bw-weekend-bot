@@ -21,12 +21,13 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
     if session is None or button_label == Button.MAIN_MENU:
         state_store.create_or_reset(user_key, NodeName.ROOT)
         current_node_id = NodeName.ROOT
-        return get_content(current_node_id)
+        session = state_store.get_session(user_key)
+        return get_content(current_node_id, session)
 
     if button_label == Button.BACK:
         state_store.pop_node(user_key)
         current_node_id = session.current
-        return get_content(current_node_id)
+        return get_content(current_node_id, session)
 
     current_node_id = session.current
 
@@ -46,7 +47,7 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
 
     state_store.push_node(user_key, target_node_id)
 
-    return get_content(target_node_id)
+    return get_content(target_node_id, session)
 
 
 def _find_button(keyboard: list[list[KeyboardButton]], target_label: str) -> str | None:
