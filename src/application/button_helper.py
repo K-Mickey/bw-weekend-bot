@@ -1,5 +1,6 @@
 from src.domain.aggregates import Content
 from src.domain.aggregates.menu_node import MenuNode
+from src.domain.entities.button_type import ButtonType
 from src.domain.entities.keyboard_button import KeyboardButton
 from src.domain.value_objects.buttons import Button
 from src.domain.value_objects.nodes import NodeName
@@ -28,10 +29,26 @@ def add_automatic_buttons(node: Content, session: UserSession) -> Content:
 
     if node.flags.is_back and len(session.history) > 1:
         back_target = session.history[-2]
-        new_node.keyboard.append([KeyboardButton(text=Button.BACK, target=back_target)])
+        new_node.keyboard.append(
+            [
+                KeyboardButton(
+                    text=Button.BACK,
+                    target=back_target,
+                    type=ButtonType.BACK,
+                )
+            ]
+        )
 
     if node.flags.is_main and len(session.history) > 1:
         main_target = NodeName.ROOT
-        new_node.keyboard.append([KeyboardButton(text=Button.MAIN_MENU, target=main_target)])
+        new_node.keyboard.append(
+            [
+                KeyboardButton(
+                    text=Button.MAIN_MENU,
+                    target=main_target,
+                    type=ButtonType.MAIN_MENU,
+                )
+            ]
+        )
 
     return new_node

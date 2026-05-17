@@ -27,7 +27,7 @@ def test_start_conversation_creates_session_and_returns_content():
         result = start_conversation(network, external_user_id)
 
         mock_store.create_or_reset.assert_called_once_with(user_key, root_node_id)
-        mock_get_content.assert_called_once_with(root_node_id, mock_session)
+        mock_get_content.assert_called_once_with(mock_session)
         assert result == root_node
 
 

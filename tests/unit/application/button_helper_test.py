@@ -3,6 +3,7 @@ import pytest
 from src.application.button_helper import add_automatic_buttons
 from src.domain.aggregates.menu_node import MenuNode
 from src.domain.aggregates.post_node import PostNode
+from src.domain.entities.button_type import ButtonType
 from src.domain.entities.keyboard_button import KeyboardButton
 from src.domain.value_objects.buttons import Button
 from src.domain.value_objects.menu_node_flags import MenuNodeFlags
@@ -50,8 +51,8 @@ def test_add_automatic_buttons_adds_back_button_when_conditions_met(menu_node, s
 
     assert result is not menu_node
     assert len(result.keyboard) == 2
-    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings")]
-    assert result.keyboard[1] == [KeyboardButton(text=Button.BACK, target=NodeName.ROOT)]
+    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
+    assert result.keyboard[1] == [KeyboardButton(text=Button.BACK, target=NodeName.ROOT, type=ButtonType.BACK)]
 
 
 def test_add_automatic_buttons_does_not_add_back_button_when_history_length_1(menu_node, session):
@@ -60,7 +61,7 @@ def test_add_automatic_buttons_does_not_add_back_button_when_history_length_1(me
 
     assert result is not menu_node
     assert len(result.keyboard) == 1
-    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings")]
+    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
 
 
 def test_add_automatic_buttons_adds_main_menu_button_when_conditions_met(menu_node, session):
@@ -71,8 +72,10 @@ def test_add_automatic_buttons_adds_main_menu_button_when_conditions_met(menu_no
 
     assert result is not menu_node
     assert len(result.keyboard) == 2
-    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings")]
-    assert result.keyboard[1] == [KeyboardButton(text=Button.MAIN_MENU, target=NodeName.ROOT)]
+    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
+    assert result.keyboard[1] == [
+        KeyboardButton(text=Button.MAIN_MENU, target=NodeName.ROOT, type=ButtonType.MAIN_MENU)
+    ]
 
 
 def test_add_automatic_buttons_does_not_add_main_menu_button_when_history_length_1(menu_node, session):
@@ -81,7 +84,7 @@ def test_add_automatic_buttons_does_not_add_main_menu_button_when_history_length
 
     assert result is not menu_node
     assert len(result.keyboard) == 1
-    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings")]
+    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
 
 
 def test_add_automatic_buttons_adds_both_buttons_when_conditions_met(menu_node, session):
@@ -91,9 +94,11 @@ def test_add_automatic_buttons_adds_both_buttons_when_conditions_met(menu_node, 
 
     assert result is not menu_node
     assert len(result.keyboard) == 3
-    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings")]
-    assert result.keyboard[1] == [KeyboardButton(text=Button.BACK, target=NodeName.ROOT)]
-    assert result.keyboard[2] == [KeyboardButton(text=Button.MAIN_MENU, target=NodeName.ROOT)]
+    assert result.keyboard[0] == [KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
+    assert result.keyboard[1] == [KeyboardButton(text=Button.BACK, target=NodeName.ROOT, type=ButtonType.BACK)]
+    assert result.keyboard[2] == [
+        KeyboardButton(text=Button.MAIN_MENU, target=NodeName.ROOT, type=ButtonType.MAIN_MENU)
+    ]
 
 
 def test_add_automatic_buttons_preserves_original_menu_node(menu_node, session):

@@ -14,4 +14,4 @@ def start_conversation(network: Network, external_user_id: int | str) -> MenuNod
     """
     user_key = UserKey(network, str(external_user_id))
     session = state_store.create_or_reset(user_key, NodeName.ROOT)
-    return get_content(NodeName.ROOT, session)
+    return get_content(session)

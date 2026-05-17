@@ -1,9 +1,12 @@
 from pydantic import BaseModel, Field, field_validator
 
+from src.domain.entities.button_type import ButtonType
+
 
 class KeyboardButton(BaseModel):
     text: str = Field(...)
     target: str = Field(...)
+    type: ButtonType = Field(ButtonType.DEFAULT)
 
     @field_validator("text")
     @classmethod
