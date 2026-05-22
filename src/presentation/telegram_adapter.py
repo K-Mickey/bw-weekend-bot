@@ -66,6 +66,9 @@ async def _send_content(message: Message, content: Content) -> None:
                     caption=media.description or "",
                     reply_markup=keyboard,
                 )
+            else:
+                # TODO: add error log
+                pass
 
 
 def _create_keyboard(content: MenuNode) -> ReplyKeyboardMarkup:
