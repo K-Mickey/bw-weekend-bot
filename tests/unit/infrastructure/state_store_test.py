@@ -15,11 +15,6 @@ def state_store():
 
 
 @pytest.fixture
-def user_key():
-    return UserKey(Network.TELEGRAM, "123")
-
-
-@pytest.fixture
 def root_with_session(state_store, user_key):
     state_store.create_or_reset(user_key, ROOT_NODE)
     return state_store

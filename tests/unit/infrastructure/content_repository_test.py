@@ -1,5 +1,4 @@
 from datetime import datetime
-from pathlib import Path
 
 import pytest
 
@@ -11,13 +10,11 @@ from src.infrastructure.content_repository import ContentRepository
 
 
 @pytest.fixture
-def patch_dir():
+def patch_dir(data_dir):
     from src.config import settings
 
     original_dir = settings.content_data_dir
-
-    test_dir = Path("tests/test_data/content/data")
-    settings.content_data_dir = settings.base_dir / test_dir
+    settings.content_data_dir = settings.base_dir / data_dir
 
     yield
 

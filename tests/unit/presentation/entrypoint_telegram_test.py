@@ -17,19 +17,18 @@ def bot():
 
 @pytest.fixture
 def mock_get_commands():
-    with patch("src.presentation.entrypoint_telegram._get_commands", return_value=[]):
-        yield
+    with patch("src.presentation.entrypoint_telegram._get_commands", return_value=[]) as get_commands:
+        yield get_commands
 
 
 @pytest.mark.asyncio
-async def test_start_polling_with_token():
+async def test_start_polling_with_token(mock_get_commands):
     mock_bot = AsyncMock()
     mock_bot.__aenter__ = AsyncMock(return_value=mock_bot)
     mock_bot.__aexit__ = AsyncMock()
 
     with (
         patch("src.presentation.entrypoint_telegram.Bot", return_value=mock_bot) as MockBot,
-        patch("src.presentation.entrypoint_telegram._get_commands", return_value=[]) as mock_get_commands,
         patch("src.presentation.entrypoint_telegram.Dispatcher") as MockDispatcher,
         patch("src.presentation.entrypoint_telegram.router") as mock_router,
     ):

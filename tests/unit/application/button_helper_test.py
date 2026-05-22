@@ -7,16 +7,7 @@ from src.domain.entities.button_type import ButtonType
 from src.domain.entities.keyboard_button import KeyboardButton
 from src.domain.value_objects.buttons import Button
 from src.domain.value_objects.menu_node_flags import MenuNodeFlags
-from src.domain.value_objects.network import Network
 from src.domain.value_objects.nodes import NodeName
-from src.domain.value_objects.user_key import UserKey
-from src.domain.value_objects.user_session import UserSession
-
-
-@pytest.fixture
-def session():
-    user_key = UserKey(Network.TELEGRAM, "123")
-    return UserSession(user_key, NodeName.ROOT)
 
 
 @pytest.fixture

@@ -6,11 +6,10 @@ from aiogram.types import KeyboardButton
 from src.domain.aggregates.menu_node import MenuNode
 from src.domain.value_objects.network import Network
 from src.presentation.telegram_adapter import _create_keyboard, _send_content, cmd_help, cmd_start, handle_text_message
-from tests.conftest import get_test_data
 
 
 @pytest.fixture
-def menu_node():
+def menu_node(get_test_data):
     yaml_file = get_test_data("menu_full.yaml")
     return MenuNode(**yaml_file)
 

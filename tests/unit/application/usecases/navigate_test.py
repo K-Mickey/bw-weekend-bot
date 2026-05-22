@@ -6,19 +6,6 @@ from src.application.usecases.navigate import navigate
 from src.domain.aggregates.menu_node import MenuNode
 from src.domain.entities.button_type import ButtonType
 from src.domain.entities.keyboard_button import KeyboardButton
-from src.domain.value_objects.network import Network
-from src.domain.value_objects.user_key import UserKey
-from src.domain.value_objects.user_session import UserSession
-
-
-@pytest.fixture
-def user_key():
-    return UserKey(Network.TELEGRAM, "123")
-
-
-@pytest.fixture
-def session(user_key):
-    return UserSession(user_key=user_key, root_node_id="main")
 
 
 @pytest.fixture
