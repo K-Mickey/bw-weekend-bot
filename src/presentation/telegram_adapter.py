@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, F, Router
+from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup
 
@@ -15,7 +15,7 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, dp: Dispatcher) -> None:
+async def cmd_start(message: Message) -> None:
     user_id = message.from_user.id
     content = start_conversation(Network.TELEGRAM, user_id)
     await _send_content(message, content)
@@ -31,7 +31,7 @@ async def cmd_help(message: Message) -> None:
 
 
 @router.message(F.text)
-async def handle_text_message(message: Message, dp: Dispatcher) -> None:
+async def handle_text_message(message: Message) -> None:
     user_id = message.from_user.id
     text = message.text
     if not text:
@@ -68,7 +68,7 @@ async def _send_content(message: Message, content: Content) -> None:
                 )
 
 
-def _create_keyboard(content: Content) -> ReplyKeyboardMarkup:
+def _create_keyboard(content: MenuNode) -> ReplyKeyboardMarkup:
     rows = []
     for row in content.keyboard:
         buttons = [KeyboardButton(text=btn.text) for btn in row]

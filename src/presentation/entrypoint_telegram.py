@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 async def start_polling() -> None:
-    bot_token = settings.BOT_TOKEN_TELEGRAM
+    bot_token = settings.bot_token_telegram
     if not bot_token:
         logger.error("BOT_TOKEN_TELEGRAM not set in environment")
         return
@@ -30,7 +30,7 @@ async def start_polling() -> None:
 
 
 def start_webhook() -> None:
-    bot_token = settings.BOT_TOKEN_TELEGRAM
+    bot_token = settings.bot_token_telegram
     if not bot_token:
         logger.error("BOT_TOKEN_TELEGRAM not set in environment")
         return
@@ -44,21 +44,21 @@ def start_webhook() -> None:
     handler = SimpleRequestHandler(
         dispatcher=dp,
         bot=bot,
-        secret_token=settings.WEBHOOK_SECRET,
+        secret_token=settings.webhook_secret,
     )
-    handler.register(app, path=settings.WEBHOOK_PATH)
+    handler.register(app, path=settings.webhook_path)
     setup_application(app, dp, bot=bot)
 
-    host = settings.WEB_SERVER_HOST
-    port = settings.WEB_SERVER_PORT
+    host = settings.web_server_host
+    port = settings.web_server_port
     logger.info("Starting Telegram bot in webhook mode on %s:%s", host, port)
     web.run_app(app, host=host, port=port)
 
 
 async def on_startup(bot: Bot):
     await bot.set_my_commands(commands=_get_commands())
-    webhook_url = settings.WEBHOOK_URL
-    secret_token = settings.WEBHOOK_SECRET
+    webhook_url = settings.webhook_url
+    secret_token = settings.webhook_secret
     if webhook_url:
         await bot.set_webhook(url=webhook_url, secret_token=secret_token)
         logger.info("Webhook set to %s", webhook_url)

@@ -1,0 +1,28 @@
+id: menu_full
+content:
+  - id: post_text
+    media:
+      - type: text
+        text: Hello world
+    available_from: "2025-01-01"
+    available_to: "2025-12-31"
+  - id: post_media
+    media:
+      - type: photo
+        url: some_photo.jpg
+        description: "real photo"
+      - type: video
+        url: some_video.mp4
+        description: "real video"
+    available_from: "2025-01-01"
+    available_to: "2025-12-31"
+
+keyboard:
+  - - text: "Button 1"
+      target: button_1
+  - - text: "Button 2"
+      target: button_2
+
+flags:
+  is_back: false
+  is_main: false
