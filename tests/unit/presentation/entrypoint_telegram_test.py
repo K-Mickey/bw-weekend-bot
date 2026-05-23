@@ -38,7 +38,7 @@ async def test_start_polling_with_token(mock_get_commands):
         await start_polling()
 
         MockBot.assert_called_once_with(
-            token=settings.bot_token_telegram,
+            token=settings.telegram.bot_token,
             default=ANY,
         )
         mock_bot.set_my_commands.assert_awaited_once_with(commands=mock_get_commands.return_value)
@@ -55,10 +55,10 @@ def test_start_webhook():
     ):
         start_webhook()
 
-        MockBot.assert_called_once_with(token=settings.bot_token_telegram, default=ANY)
+        MockBot.assert_called_once_with(token=settings.telegram.bot_token, default=ANY)
 
         handler_instance = MockHandler.return_value
-        handler_instance.register.assert_called_once_with(ANY, path=settings.webhook_path)
+        handler_instance.register.assert_called_once_with(ANY, path=settings.telegram.webhook_path)
 
         mock_run_app.assert_called_once_with(
             ANY,
@@ -72,8 +72,8 @@ async def test_on_startup(bot, mock_get_commands):
     await on_startup(bot)
     bot.set_my_commands.assert_called_once_with(commands=[])
     bot.set_webhook.assert_called_once_with(
-        url=settings.webhook_url,
-        secret_token=settings.webhook_secret,
+        url=settings.telegram.webhook_url,
+        secret_token=settings.telegram.webhook_secret,
     )
 
 
