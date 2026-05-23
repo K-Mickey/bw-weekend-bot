@@ -21,4 +21,7 @@ check-content:
 
 check: test lint check-content
 
+tg-run:
+	uv run src/presentation/entrypoint_telegram.py
+
 .PHONY: install build package-install test test-coverage lint check-content check

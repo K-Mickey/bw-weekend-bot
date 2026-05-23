@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
@@ -28,8 +29,8 @@ def get_telegram_dp() -> Dispatcher:
     return dp
 
 
-def set_commands(bot: Bot) -> None:
-    bot.set_my_commands(commands=get_telegram_commands())
+async def set_commands(bot: Bot) -> None:
+    await bot.set_my_commands(commands=get_telegram_commands())
 
 
 def get_telegram_commands() -> list[BotCommand]:
@@ -37,3 +38,8 @@ def get_telegram_commands() -> list[BotCommand]:
         BotCommand(command="/start", description="Запустить бота"),
         BotCommand(command="/help", description="Помощь"),
     ]
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=settings.log_level)
+    asyncio.run(start_polling())

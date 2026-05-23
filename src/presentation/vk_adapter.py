@@ -1,3 +1,5 @@
+import logging
+
 from vkbottle import Keyboard, Text
 from vkbottle.bot import BotLabeler, Message
 
@@ -11,10 +13,12 @@ from src.domain.entities.media.video_node import VideoNode
 from src.domain.value_objects.network import Network
 
 labeler = BotLabeler()
+logger = logging.getLogger(__name__)
 
 
 @labeler.message(text="/start")
 async def start_handler(message: Message) -> None:
+    logger.debug("Start handler is called")
     user_id = message.from_id
     content = start_conversation(Network.VK, user_id)
     await _send_content(message, content)
@@ -22,6 +26,7 @@ async def start_handler(message: Message) -> None:
 
 @labeler.message(text="/help")
 async def help_handler(message: Message) -> None:
+    logger.debug("Help handler is called")
     await message.answer(
         "Пишите нам, если что-то не работает или нужна помощь:\n\n"
         "- Автор бота Михаил: @k_mickey \n"
@@ -31,6 +36,7 @@ async def help_handler(message: Message) -> None:
 
 @labeler.message()
 async def text_handler(message: Message) -> None:
+    logger.debug("Text handler is called")
     text = message.text
     if not text:
         return
@@ -39,21 +45,27 @@ async def text_handler(message: Message) -> None:
         content = navigate(Network.VK, user_id, text)
         await _send_content(message, content)
     except ValueError as e:
-        await message.answer(f"Error: {e}")
+        logger.error(f"Error: {e}")
+        await message.answer("Извините, что-то пошло не так")
+        await start_handler(message)
 
 
 async def _send_content(message: Message, content: Content) -> None:
+    logger.debug("Send content is called")
     keyboard = None
     if isinstance(content, MenuNode):
         keyboard = _create_keyboard(content)
+        logger.debug(f"Created keyboard: {keyboard}")
 
     posts = content.content if isinstance(content, MenuNode) else [content]
 
     for post in posts:
         for media in post.media:
             if isinstance(media, TextNode):
+                logger.debug(f"Sending text: {media.text}")
                 await message.answer(media.text, keyboard=keyboard)
             elif isinstance(media, PhotoNode):
+                logger.debug(f"Sending photo: {media.url}")
                 # photo uploader?
                 await message.answer(
                     attachment=media.url,
@@ -61,6 +73,7 @@ async def _send_content(message: Message, content: Content) -> None:
                     keyboard=keyboard,
                 )
             elif isinstance(media, VideoNode):
+                logger.debug(f"Sending video: {media.url}")
                 # video uploader??
                 await message.answer(
                     attachment=media.url,
@@ -68,8 +81,7 @@ async def _send_content(message: Message, content: Content) -> None:
                     keyboard=keyboard,
                 )
             else:
-                # unsupported media type – silently ignore
-                pass
+                raise ValueError(f"Unsupported media type: {type(media)}")
 
 
 def _create_keyboard(content: MenuNode) -> Keyboard:
