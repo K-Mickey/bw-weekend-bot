@@ -6,7 +6,15 @@ from pydantic_settings import BaseSettings
 class TelegramSettings(BaseSettings):
     bot_token: str = ""
     webhook_url: str = ""
-    webhook_path: str = "/webhook"
+    webhook_path: str = "/tg-webhook"
+    webhook_secret: str = ""
+
+
+class VKSettings(BaseSettings):
+    bot_token: str = ""
+    webhook_url: str = ""
+    webhook_title: str = "bw-weekend-bot"
+    webhook_path: str = "/vk-webhook"
     webhook_secret: str = ""
 
 
@@ -20,6 +28,7 @@ class Settings(BaseSettings):
     web_server_port: int = 8000
 
     telegram: TelegramSettings = TelegramSettings()
+    vk: VKSettings = VKSettings()
 
 
 settings = Settings()
