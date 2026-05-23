@@ -1,0 +1,45 @@
+import logging
+
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
+
+from src.config import settings
+from src.presentation.entrypoint_telegram import get_commands
+from src.presentation.telegram_adapter import router
+
+logger = logging.getLogger(__name__)
+
+
+def start_webhook() -> None:
+    bot_token = settings.telegram.bot_token
+
+    bot = Bot(token=bot_token, default=DefaultBotProperties(parse_mode="HTML"))
+    dp = Dispatcher()
+    dp.include_router(router)
+
+    dp.startup.register(on_startup)
+
+    app = web.Application()
+    handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot,
+        secret_token=settings.telegram.webhook_secret,
+    )
+    handler.register(app, path=settings.telegram.webhook_path)
+    setup_application(app, dp, bot=bot)
+
+    host = settings.web_server_host
+    port = settings.web_server_port
+    logger.info("Starting Telegram bot in webhook mode on %s:%s", host, port)
+    web.run_app(app, host=host, port=port)
+
+
+async def on_startup(bot: Bot):
+    await bot.set_my_commands(commands=get_commands())
+    webhook_url = settings.telegram.webhook_url
+    secret_token = settings.telegram.webhook_secret
+    if webhook_url:
+        await bot.set_webhook(url=webhook_url, secret_token=secret_token)
+        logger.info("Webhook set to %s", webhook_url)
