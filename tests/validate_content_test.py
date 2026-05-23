@@ -55,9 +55,9 @@ def test_check_target_exists_success(get_test_data):
     assert check_target_exists(tuple(nodes_list)) == 0
 
 
-def test_check_target_exists_failure():
-    nodes = [{"id": "a", "keyboard": [{"target": "c"}]}]
-    assert check_target_exists(tuple(nodes)) == 1
+def test_check_target_exists_failure(get_test_data):
+    nodes = get_test_data("menu_ok.yaml")
+    assert check_target_exists((nodes,)) == 2
 
 
 def test_check_domain_objects_success(get_test_data):

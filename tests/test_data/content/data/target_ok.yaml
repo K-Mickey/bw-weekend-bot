@@ -1,4 +1,4 @@
 - id: a
   keyboard:
-    - target: b
+    - - target: b
 - id: b

@@ -87,15 +87,16 @@ def check_target_exists(nodes: tuple[dict, ...]) -> int:
     valid_ids = {n.get("id") for n in nodes if n.get("id")}
     errors = 0
     for node in nodes:
-        for btn in node.get("keyboard", []):
-            target = btn.get("target")
-            if target and target not in valid_ids:
-                log.error(
-                    "Node `%s` contains unknown target `%s`",
-                    node.get("id"),
-                    target,
-                )
-                errors += 1
+        for row in node.get("keyboard", []):
+            for btn in row:
+                target = btn.get("target")
+                if target and target not in valid_ids:
+                    log.error(
+                        "Node `%s` contains unknown target `%s`",
+                        node.get("id"),
+                        target,
+                    )
+                    errors += 1
     return errors
 
 
@@ -129,7 +130,7 @@ def main(project_root: Path) -> int:
 
     nodes = load_files(yaml_files)
 
-    total_errors = 0
+    total_errors = len(yaml_files) - len(nodes)
     total_errors += check_node_ids(nodes)
     total_errors += check_target_exists(nodes)
     total_errors += check_domain_objects(nodes)
