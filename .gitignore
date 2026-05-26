@@ -2,4 +2,5 @@
 .idea/
 /coverage.xml
 /.coverage
-/content/**/*.yaml
+content/**/*
+!content/**/.gitkeep
