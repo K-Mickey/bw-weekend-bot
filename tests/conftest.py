@@ -20,6 +20,16 @@ def data_dir(root_dir) -> Path:
 
 
 @pytest.fixture
+def photo_dir(root_dir) -> Path:
+    return root_dir / "content" / "photo"
+
+
+@pytest.fixture
+def video_dir(root_dir) -> Path:
+    return root_dir / "content" / "video"
+
+
+@pytest.fixture
 def get_test_data(data_dir):
     def _get(name: str):
         full_path = data_dir / name
