@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     base_dir: Path = Path(__file__).parent.parent
     content_dir: Path = base_dir / "content"
     content_data_dir: Path = content_dir / "data"
+    content_photo_dir: Path = content_dir / "photo"
+    content_video_dir: Path = content_dir / "video"
     test_data_dir: Path = base_dir / "tests" / "test_data"
 
     log_level: str = logging.INFO

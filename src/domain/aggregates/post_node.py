@@ -1,15 +1,13 @@
 from datetime import datetime
-from typing import Mapping, TypeAlias
+from typing import Mapping
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from ..entities.media import MediaItem
 from ..entities.media.photo_node import PhotoNode
 from ..entities.media.text_node import TextNode
 from ..entities.media.video_node import VideoNode
 from ..entities.node_kind import NodeKind
-
-# Local alias for the union of media entity types
-MediaItem: TypeAlias = PhotoNode | VideoNode | TextNode
 
 
 class PostNode(BaseModel):
