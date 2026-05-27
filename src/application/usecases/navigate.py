@@ -3,7 +3,7 @@ from src.application.usecases.start_conversation import start_conversation
 from src.domain.aggregates import Content
 from src.domain.aggregates.menu_node import MenuNode
 from src.domain.entities.button_type import ButtonType
-from src.domain.entities.keyboard_button import KeyboardButton
+from src.domain.entities.keyboard import KeyboardButton
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.nodes import NodeName
 from src.domain.value_objects.user_key import UserKey
@@ -27,10 +27,7 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
     if not isinstance(current_node, MenuNode):
         raise ValueError(f"Current node {current_node_id} is not a menu node")
 
-    if not current_node.keyboard:
-        raise ValueError(f"Current node {current_node_id} has no keyboard to navigate")
-
-    button = _find_button(current_node.keyboard, button_label)
+    button = _find_button(current_node, button_label)
     if not button:
         raise ValueError("Button not found")
 
@@ -47,9 +44,10 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
     return get_content(session)
 
 
-def _find_button(keyboard: list[list[KeyboardButton]], target_label: str) -> KeyboardButton | None:
-    for row in keyboard:
-        for button in row:
-            if button.text == target_label:
-                return button
+def _find_button(node: MenuNode, target_label: str) -> KeyboardButton | None:
+    for content in node.content:
+        for row in content.keyboard:
+            for button in row:
+                if button.text == target_label:
+                    return button
     return None

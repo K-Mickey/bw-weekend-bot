@@ -16,6 +16,6 @@ def get_content(session: UserSession) -> Content:
     if node is None:
         raise ValueError(f"Node not found: {node_id}")
 
-    node = add_automatic_buttons(node, session)
+    add_automatic_buttons(node, session)
 
     return node

@@ -1,27 +1,21 @@
-from datetime import datetime
 from typing import Mapping
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from ..entities.keyboard import Keyboard
 from ..entities.media import MediaItem
 from ..entities.media.photo_node import PhotoNode
 from ..entities.media.text_node import TextNode
 from ..entities.media.video_node import VideoNode
 from ..entities.node_kind import NodeKind
+from ..value_objects.menu_node_flags import PostNodeFlags
 
 
 class PostNode(BaseModel):
     id: str = Field(...)
     media: list[MediaItem] = Field(...)
-    available_from: datetime | None = None
-    available_to: datetime | None = None
-    flags: list[str] | None = None
-
-    @model_validator(mode="after")
-    def check_dates(self):
-        if self.available_to and self.available_from and self.available_to <= self.available_from:
-            raise ValueError("available_to must be greater than available_from")
-        return self
+    keyboard: Keyboard | list[list[dict]] = Field(default_factory=Keyboard)
+    flags: PostNodeFlags = Field(default_factory=PostNodeFlags)
 
     @classmethod
     def _parse_media_item(cls, raw: Mapping) -> MediaItem:
@@ -53,3 +47,9 @@ class PostNode(BaseModel):
         if has_text and has_media:
             raise ValueError("PostNode cannot contain TextNode together with PhotoNode or VideoNode")
         return parsed
+
+    @model_validator(mode="after")
+    def check_keyboard(self) -> None:
+        if self.keyboard and len(self.media) > 1:
+            raise ValueError("PostNode cannot have keyboard if there is more than one media item")
+        return self

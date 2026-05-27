@@ -4,12 +4,10 @@ content:
     media:
       - type: text
         text: Hello world
-    available_from: "2025-01-01"
-    available_to: "2025-12-31"
-keyboard:
-  - - text: settings
-      target: menu_settings
-  - - text: help
-      target: menu_help
-flags:
-  is_back: false
+    keyboard:
+      - - text: settings
+          target: menu_settings
+      - - text: help
+          target: menu_help
+    flags:
+      is_back: false

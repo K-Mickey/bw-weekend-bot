@@ -19,6 +19,7 @@ class ContentRepository:
             with open(file_path, "r", encoding="utf-8") as f:
                 raw = yaml.safe_load(f)
             return node_factory(raw)
-        except Exception:
+        except Exception as e:
             # In case of YAML parsing error or factory error, return None
+            print(e)
             return None

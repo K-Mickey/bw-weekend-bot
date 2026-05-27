@@ -1,4 +1,9 @@
 - id: a
-  keyboard:
-    - - target: b
+  content:
+    - id: c
+      media:
+        - type: text
+          text: Hello world
+      keyboard:
+        - - target: b
 - id: b

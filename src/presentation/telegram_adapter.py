@@ -6,7 +6,7 @@ from aiogram.types import FSInputFile, KeyboardButton, Message, ReplyKeyboardMar
 
 from src.application.usecases.navigate import navigate
 from src.application.usecases.start_conversation import start_conversation
-from src.domain.aggregates import Content
+from src.domain.aggregates import Content, PostNode
 from src.domain.aggregates.menu_node import MenuNode
 from src.domain.entities.media.photo_node import PhotoNode
 from src.domain.entities.media.text_node import TextNode
@@ -59,13 +59,12 @@ async def handle_text_message(message: Message) -> None:
 
 async def _send_content(message: Message, content: Content) -> None:
     logger.debug("Send content is called")
-    keyboard: ReplyKeyboardMarkup | None = None
-    if isinstance(content, MenuNode):
-        keyboard = _create_keyboard(content)
-        logger.debug(f"Created keyboard: {keyboard}")
 
     posts = content.content if isinstance(content, MenuNode) else [content]
     for post in posts:
+        keyboard = _create_keyboard(post)
+        logger.debug(f"Created keyboard: {keyboard}")
+
         for media in post.media:
             match media:
                 case TextNode():
@@ -78,7 +77,7 @@ async def _send_content(message: Message, content: Content) -> None:
                     raise ValueError(f"Unsupported media type: {media}")
 
 
-def _create_keyboard(content: MenuNode) -> ReplyKeyboardMarkup:
+def _create_keyboard(content: PostNode) -> ReplyKeyboardMarkup:
     rows = []
     for row in content.keyboard:
         buttons = [KeyboardButton(text=btn.text) for btn in row]

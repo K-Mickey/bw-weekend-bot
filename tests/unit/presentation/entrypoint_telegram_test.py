@@ -54,7 +54,9 @@ def test_get_dp():
         assert dp.sub_routers == [mock_router]
 
 
-def test_set_commands():
+@pytest.mark.asyncio
+async def test_set_commands():
     with patch("src.presentation.entrypoint_telegram.Bot") as mock_bot:
-        set_commands(mock_bot)
+        mock_bot.set_my_commands = AsyncMock()
+        await set_commands(mock_bot)
         mock_bot.set_my_commands.assert_called_once_with(commands=get_telegram_commands())

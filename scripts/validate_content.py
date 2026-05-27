@@ -87,16 +87,17 @@ def check_target_exists(nodes: tuple[dict, ...]) -> int:
     valid_ids = {n.get("id") for n in nodes if n.get("id")}
     errors = 0
     for node in nodes:
-        for row in node.get("keyboard", []):
-            for btn in row:
-                target = btn.get("target")
-                if target and target not in valid_ids:
-                    log.error(
-                        "Node `%s` contains unknown target `%s`",
-                        node.get("id"),
-                        target,
-                    )
-                    errors += 1
+        for post in node.get("content", []):
+            for row in post.get("keyboard", []):
+                for btn in row:
+                    target = btn.get("target")
+                    if target and target not in valid_ids:
+                        log.error(
+                            "Node `%s` contains unknown target `%s`",
+                            node.get("id"),
+                            target,
+                        )
+                        errors += 1
     return errors
 
 

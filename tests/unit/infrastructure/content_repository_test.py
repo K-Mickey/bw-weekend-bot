@@ -1,11 +1,9 @@
-from datetime import datetime
-
 import pytest
 
 from src.domain.aggregates import MenuNode, PostNode
-from src.domain.entities.keyboard_button import KeyboardButton
+from src.domain.entities.keyboard import Keyboard, KeyboardButton, KeyboardRow
 from src.domain.entities.media.text_node import TextNode
-from src.domain.value_objects.menu_node_flags import MenuNodeFlags
+from src.domain.value_objects.menu_node_flags import PostNodeFlags
 from src.infrastructure.content_repository import ContentRepository
 
 
@@ -36,19 +34,19 @@ def test_content_repository_context(patch_dir):
 
     content = node.content[0]
     assert isinstance(content, PostNode)
-    assert content.available_from == datetime(2025, 1, 1, 0, 0)
-    assert content.available_to == datetime(2025, 12, 31, 0, 0)
 
     media = content.media[0]
     assert isinstance(media, TextNode)
     assert media.text == "Hello world"
 
-    assert node.keyboard == [
-        [KeyboardButton(text="settings", target="menu_settings")],
-        [KeyboardButton(text="help", target="menu_help")],
-    ]
+    assert content.keyboard == Keyboard(
+        rows=[
+            KeyboardRow(buttons=[KeyboardButton(text="settings", target="menu_settings")]),
+            KeyboardRow(buttons=[KeyboardButton(text="help", target="menu_help")]),
+        ]
+    )
 
-    assert node.flags == MenuNodeFlags(
+    assert content.flags == PostNodeFlags(
         is_back=False,
         is_main=True,
         build=True,

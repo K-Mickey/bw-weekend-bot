@@ -6,4 +6,3 @@ content:
         text: Hello
       - type: photo
         url: http://example.com/img.png
-keyboard: []

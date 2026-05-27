@@ -3,9 +3,9 @@ from unittest.mock import patch
 import pytest
 
 from src.application.usecases.navigate import navigate
+from src.domain.aggregates import PostNode
 from src.domain.aggregates.menu_node import MenuNode
 from src.domain.entities.button_type import ButtonType
-from src.domain.entities.keyboard_button import KeyboardButton
 
 
 @pytest.fixture
@@ -24,7 +24,6 @@ def empty_node(node_id: str) -> MenuNode:
     return MenuNode(
         id=node_id,
         content=[],
-        keyboard=[[]],
     )
 
 
@@ -38,12 +37,17 @@ def test_navigate_forward(user_key, session, mock_store, mock_get_content):
 
     mock_current_node = MenuNode(
         id=current_node_id,
-        content=[],
-        keyboard=[
-            [
-                KeyboardButton(text=button_label, target=target_node_id, type=ButtonType.DEFAULT),
-                KeyboardButton(text="Other", target="node_c"),
-            ]
+        content=[
+            PostNode(
+                id="some",
+                media=[],
+                keyboard=[
+                    [
+                        dict(text=button_label, target=target_node_id, type=ButtonType.DEFAULT),
+                        dict(text="Other", target="node_c"),
+                    ]
+                ],
+            )
         ],
     )
 
@@ -66,8 +70,13 @@ def test_navigate_back(user_key, session, mock_store, mock_get_content):
 
     mock_current_node = MenuNode(
         id=current_node_id,
-        content=[],
-        keyboard=[[KeyboardButton(text=button_label, target="node_a", type=ButtonType.BACK)]],
+        content=[
+            PostNode(
+                id="some",
+                media=[],
+                keyboard=[[dict(text=button_label, target="node_a", type=ButtonType.BACK)]],
+            )
+        ],
     )
 
     mock_expected_response = empty_node("node_a")
@@ -97,10 +106,14 @@ def test_navigate_back_at_root(user_key, session, mock_store, mock_get_content):
 
     mock_response = MenuNode(
         id=current_node_id,
-        content=[],
-        keyboard=[[KeyboardButton(text=button_label, target="main", type=ButtonType.BACK)]],
+        content=[
+            PostNode(
+                id="some",
+                media=[],
+                keyboard=[[dict(text=button_label, target="main", type=ButtonType.BACK)]],
+            )
+        ],
     )
-
     mock_store.get_session.return_value = mock_session
     mock_store.pop_node.return_value = None
     mock_get_content.side_effect = [mock_response, mock_response]

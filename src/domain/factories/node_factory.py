@@ -4,8 +4,9 @@ from ..aggregates.post_node import PostNode
 
 
 def node_factory(raw: dict) -> Content:
+    print(raw)
     match raw:
-        case {"keyboard": _}:
+        case {"content": _}:
             return MenuNode(**raw)
         case {"media": _}:
             return PostNode(**raw)
