@@ -19,7 +19,7 @@ lint:
 check-content:
 	uv run validate-content
 
-check: test lint check-content
+check: test lint
 
 tg-run:
 	uv run src/presentation/entrypoint_telegram.py

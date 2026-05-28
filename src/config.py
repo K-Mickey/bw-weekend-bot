@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -41,7 +40,7 @@ class Settings(BaseSettings):
     content_video_dir: Path = content_dir / "video"
     test_data_dir: Path = base_dir / "tests" / "test_data"
 
-    log_level: str = logging.INFO
+    log_level: str = "INFO"
 
     web_server_host: str = "0.0.0.0"
     web_server_port: int = 8000
