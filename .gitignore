@@ -4,3 +4,4 @@
 /.coverage
 content/**/*
 !content/**/.gitkeep
+old/
