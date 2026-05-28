@@ -38,7 +38,7 @@ class InMemoryMediaCache(MediaCache):
 
     async def add(self, cache_key: CacheKey, cache_record: CacheRecord) -> None:
         async with self._store_lock:
-            cache_record.updated_at = datetime.now()
+            cache_record = cache_record._replace(updated_at=datetime.now())
             self._store[cache_key] = cache_record
 
     async def remove(self, cache_key: CacheKey) -> None:
