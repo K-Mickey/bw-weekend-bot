@@ -16,7 +16,7 @@ def mock_store():
 
 @pytest.fixture
 def mock_get_content():
-    with patch("src.application.usecases.navigate.get_content") as mock:
+    with patch("src.application.usecases.navigate.get_current_content") as mock:
         yield mock
 
 

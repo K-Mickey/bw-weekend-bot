@@ -17,3 +17,6 @@ class UserSession:
         if len(self.history) <= 1:
             return None
         return self.history.pop()
+
+    def __str__(self) -> str:
+        return f"UserKey: {self.user_key}, History: {self.history}"

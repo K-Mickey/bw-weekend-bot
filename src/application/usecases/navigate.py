@@ -1,5 +1,4 @@
-from src.application.usecases.get_content import get_content
-from src.application.usecases.start_conversation import start_conversation
+from src.application.usecases.get_content import get_current_content
 from src.domain.aggregates import Content
 from src.domain.aggregates.menu_node import MenuNode
 from src.domain.entities.button_type import ButtonType
@@ -17,11 +16,7 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
     Returns the content for the next (or previous) node.
     """
     user_key = UserKey(network, str(external_user_id))
-    session = state_store.get_session(user_key)
-    if not session:
-        return start_conversation(network, external_user_id)
-
-    current_node = get_content(session)
+    current_node = get_current_content(user_key)
 
     button = _find_button(current_node, button_label)
     if not button:
@@ -37,7 +32,7 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
         case _:
             state_store.push_node(user_key, button.target)
 
-    return get_content(session)
+    return get_current_content(user_key)
 
 
 def _find_button(node: Content, target_label: str) -> KeyboardButton | None:
