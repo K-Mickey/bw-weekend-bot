@@ -36,32 +36,28 @@ def _form_keyboard(node: PostNode, session: UserSession) -> Keyboard:
     if not node.flags.build:
         return keyboard
 
-    if node.flags.is_back and len(session.history) > 1:
-        back_target = session.history[-2]
-        keyboard.add_row(
-            KeyboardRow(
-                buttons=[
-                    KeyboardButton(
-                        text=Button.BACK,
-                        target=back_target,
-                        type=ButtonType.BACK,
-                    )
-                ]
+    buttons = []
+    if node.flags.is_main and len(session.history) > 1:
+        main_target = NodeName.ROOT
+        buttons.append(
+            KeyboardButton(
+                text=Button.MAIN_MENU,
+                target=main_target,
+                type=ButtonType.MAIN_MENU,
             )
         )
 
-    if node.flags.is_main and len(session.history) > 1:
-        main_target = NodeName.ROOT
-        keyboard.add_row(
-            KeyboardRow(
-                buttons=[
-                    KeyboardButton(
-                        text=Button.MAIN_MENU,
-                        target=main_target,
-                        type=ButtonType.MAIN_MENU,
-                    )
-                ]
+    if node.flags.is_back and len(session.history) > 2:
+        back_target = session.history[-2]
+        buttons.append(
+            KeyboardButton(
+                text=Button.BACK,
+                target=back_target,
+                type=ButtonType.BACK,
             )
         )
+
+    if buttons:
+        keyboard.add_row(KeyboardRow(buttons=buttons))
 
     return keyboard

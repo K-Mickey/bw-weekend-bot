@@ -33,7 +33,8 @@ def test_add_automatic_buttons_returns_menu_node_unchanged_when_build_false(post
 
 def test_add_automatic_buttons_adds_back_button_when_conditions_met(post_node, session):
     post_node.flags.is_main = False
-    session.push("settings")  # History: [ROOT, settings]
+    session.push("other")
+    session.push("settings")  # History: [ROOT, other, settings]
 
     result = add_automatic_buttons(post_node, session)
 
@@ -42,7 +43,7 @@ def test_add_automatic_buttons_adds_back_button_when_conditions_met(post_node, s
         buttons=[KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
     )
     assert result.keyboard[1] == KeyboardRow(
-        buttons=[KeyboardButton(text=Button.BACK, target=NodeName.ROOT, type=ButtonType.BACK)]
+        buttons=[KeyboardButton(text=Button.BACK, target="other", type=ButtonType.BACK)]
     )
 
 
@@ -82,24 +83,26 @@ def test_add_automatic_buttons_does_not_add_main_menu_button_when_history_length
 
 
 def test_add_automatic_buttons_adds_both_buttons_when_conditions_met(post_node, session):
-    session.push("settings")  # History: [ROOT, settings]
+    session.push("other")
+    session.push("settings")  # History: [ROOT, other, settings]
 
     result = add_automatic_buttons(post_node, session)
 
-    assert len(result.keyboard) == 3
+    assert len(result.keyboard) == 2
     assert result.keyboard[0] == KeyboardRow(
         buttons=[KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
     )
     assert result.keyboard[1] == KeyboardRow(
-        buttons=[KeyboardButton(text=Button.BACK, target=NodeName.ROOT, type=ButtonType.BACK)]
-    )
-    assert result.keyboard[2] == KeyboardRow(
-        buttons=[KeyboardButton(text=Button.MAIN_MENU, target=NodeName.ROOT, type=ButtonType.MAIN_MENU)]
+        buttons=[
+            KeyboardButton(text=Button.MAIN_MENU, target=NodeName.ROOT, type=ButtonType.MAIN_MENU),
+            KeyboardButton(text=Button.BACK, target="other", type=ButtonType.BACK),
+        ]
     )
 
 
 def test_add_automatic_buttons_preserves_original_menu_node(post_node, session):
-    session.push("settings")  # History: [ROOT, settings]
+    session.push("other")
+    session.push("settings")  # History: [ROOT, other, settings]
 
     original_id = post_node.id
     original_media = post_node.media
@@ -113,4 +116,4 @@ def test_add_automatic_buttons_preserves_original_menu_node(post_node, session):
 
     assert result.id == original_id
     assert result.media == original_media
-    assert len(result.keyboard) == 3
+    assert len(result.keyboard) == 2
