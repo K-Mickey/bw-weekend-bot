@@ -72,6 +72,14 @@ def mock_create_keyboard():
         yield mock_create_keyboard
 
 
+@pytest.fixture
+def mock_get_content_by_id(get_test_data):
+    help_file = get_test_data("help.yaml")
+    return_value = PostNode(**help_file)
+    with patch(f"{PREFIX}.get_content_by_id", Mock(return_value=return_value)) as mock_get_content_by_id:
+        yield mock_get_content_by_id
+
+
 @pytest.mark.asyncio
 async def test_create_keyboard_returns_correct_markup(menu_node):
     markup = _create_keyboard(menu_node.content[0])
@@ -151,9 +159,10 @@ async def test_cmd_start(mock_msg, mock_start_conversation, mock_send_content):
 
 
 @pytest.mark.asyncio
-async def test_cmd_help(mock_msg):
+async def test_cmd_help(mock_msg, mock_get_content_by_id):
     await cmd_help(mock_msg)
     mock_msg.answer.assert_awaited_once()
+    mock_get_content_by_id.assert_called_once_with("help")
 
 
 @pytest.mark.asyncio

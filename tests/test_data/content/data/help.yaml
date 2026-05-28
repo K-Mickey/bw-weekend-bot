@@ -1,0 +1,7 @@
+id: help
+media:
+  - type: text
+    text: |
+      Help message
+flags:
+  build: false
