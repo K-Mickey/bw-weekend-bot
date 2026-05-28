@@ -2,5 +2,5 @@ from enum import StrEnum
 
 
 class Button(StrEnum):
-    BACK = "Back"
-    MAIN_MENU = "Main menu"
+    BACK = "Назад"
+    MAIN_MENU = "Главное меню"

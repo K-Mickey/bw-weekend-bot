@@ -21,11 +21,7 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
     if not session:
         return start_conversation(network, external_user_id)
 
-    current_node_id = session.current
     current_node = get_content(session)
-
-    if not isinstance(current_node, MenuNode):
-        raise ValueError(f"Current node {current_node_id} is not a menu node")
 
     button = _find_button(current_node, button_label)
     if not button:
@@ -44,9 +40,10 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
     return get_content(session)
 
 
-def _find_button(node: MenuNode, target_label: str) -> KeyboardButton | None:
-    for content in node.content:
-        for row in content.keyboard:
+def _find_button(node: Content, target_label: str) -> KeyboardButton | None:
+    content = node.content if isinstance(node, MenuNode) else [node]
+    for post in content:
+        for row in post.keyboard:
             for button in row:
                 if button.text == target_label:
                     return button

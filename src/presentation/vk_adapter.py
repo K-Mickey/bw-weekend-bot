@@ -3,6 +3,7 @@ import logging
 from vkbottle import Keyboard, Text
 from vkbottle.bot import BotLabeler, Message
 
+from src.application.usecases.get_content import get_content_by_id
 from src.application.usecases.navigate import navigate
 from src.application.usecases.start_conversation import start_conversation
 from src.domain.aggregates import Content
@@ -11,6 +12,7 @@ from src.domain.entities.media.photo_node import PhotoNode
 from src.domain.entities.media.text_node import TextNode
 from src.domain.entities.media.video_node import VideoNode
 from src.domain.value_objects.network import Network
+from src.domain.value_objects.nodes import NodeName
 
 labeler = BotLabeler()
 logger = logging.getLogger(__name__)
@@ -27,11 +29,12 @@ async def start_handler(message: Message) -> None:
 @labeler.message(text="/help")
 async def help_handler(message: Message) -> None:
     logger.debug("Help handler is called")
-    await message.answer(
-        "Пишите нам, если что-то не работает или нужна помощь:\n\n"
-        "- Автор бота Михаил: @k_mickey \n"
-        "- Наше главенство Мария: +79101463516"
-    )
+    content = get_content_by_id(NodeName.HELP)
+    if not content.media:
+        logger.error("Create help node")
+        return
+    [post] = content.media
+    await message.answer(post.text)
 
 
 @labeler.message()
