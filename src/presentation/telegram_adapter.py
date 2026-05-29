@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 @router.errors()
 async def handle_errors(event: ErrorEvent) -> None:
+    logger.error(f"Error: {event.exception}")
     message = None
     update = event.update
 
@@ -196,7 +197,7 @@ async def _send_video_with_cache(
             reply_markup=keyboard,
         )
 
-        file_id = video_message.video[-1].file_id
+        file_id = video_message.video.file_id
         cache_record = CacheRecord.from_file(
             file_id=file_id,
             file_path=file_path,
