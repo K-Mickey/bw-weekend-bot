@@ -1,7 +1,7 @@
 from src.application.button_helper import add_automatic_buttons
 from src.domain.aggregates import Content
 from src.domain.value_objects.user_key import UserKey
-from src.infrastructure.content_repository import ContentRepository
+from src.infrastructure.content_repository import ContentNotFoundException, ContentRepository
 from src.infrastructure.state_store import state_store
 
 
@@ -28,6 +28,6 @@ def get_content_by_id(node_id: str) -> Content:
     """
     node = ContentRepository.get_node(node_id)
     if node is None:
-        raise ValueError(f"Node not found: {node_id}")
+        raise ContentNotFoundException(f"Node not found: {node_id}")
 
     return node

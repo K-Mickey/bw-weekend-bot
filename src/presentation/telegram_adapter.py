@@ -1,8 +1,9 @@
 import logging
 
 from aiogram import F, Router
+from aiogram.exceptions import TelegramForbiddenError
 from aiogram.filters import Command, CommandStart
-from aiogram.types import FSInputFile, KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.types import ErrorEvent, FSInputFile, KeyboardButton, Message, ReplyKeyboardMarkup
 
 from src.application.usecases.get_content import get_content_by_id
 from src.application.usecases.navigate import navigate
@@ -14,6 +15,7 @@ from src.domain.entities.media.text_node import TextNode
 from src.domain.entities.media.video_node import VideoNode
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.nodes import NodeName
+from src.infrastructure.content_repository import ContentNotFoundException
 from src.infrastructure.file_cache import get_cache
 from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
 from src.infrastructure.file_cache.value_objects.cache_media_type import CacheMediaType
@@ -24,23 +26,66 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 
+@router.errors()
+async def handle_errors(event: ErrorEvent) -> None:
+    message = None
+    update = event.update
+
+    if update.message:
+        message = update.message
+    elif update.callback_query:
+        message = update.callback_query.message
+    else:
+        logger.error(f"Unknown update type: {update}")
+
+    if isinstance(event.exception, TelegramForbiddenError):
+        logging.warning("User blocked the bot.")
+        return
+
+    if message:
+        chat_id = message.chat.id
+        try:
+            content = get_content_by_id(NodeName.ERROR)
+            await _send_content(message, content)
+        except ContentNotFoundException:
+            logger.error("Create error node")
+            return
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            logging.exception(f"Error while sending error message to user {chat_id}")
+
+
 @router.message(CommandStart())
 async def cmd_start(message: Message) -> None:
     logger.debug("Start handler is called")
     user_id = message.from_user.id
-    content = start_conversation(Network.TELEGRAM, user_id)
+
+    try:
+        content = start_conversation(Network.TELEGRAM, user_id)
+    except ContentNotFoundException:
+        logger.error("Create start node")
+        raise
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise
+
     await _send_content(message, content)
 
 
 @router.message(Command("help"))
 async def cmd_help(message: Message) -> None:
     logger.debug("Help handler is called")
-    content = get_content_by_id(NodeName.HELP)
-    if not content.media:
+
+    try:
+        content = get_content_by_id(NodeName.HELP)
+    except ContentNotFoundException:
         logger.error("Create help node")
-        return
-    [post] = content.media
-    await message.answer(text=post.text)
+        raise
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise
+
+    await _send_content(message, content)
 
 
 @router.message(F.text)
@@ -50,14 +95,10 @@ async def handle_text_message(message: Message) -> None:
     text = message.text
     if not text:
         return
-    try:
-        content = navigate(Network.TELEGRAM, user_id, text)
-        logger.debug(f"Navigated to {content.id}")
-        await _send_content(message, content)
-    except ValueError as e:
-        logger.error(f"Error: {e}")
-        await message.answer("Извините, что-то пошло не так")
-        await cmd_start(message)
+
+    content = navigate(Network.TELEGRAM, user_id, text)
+    logger.debug(f"Navigated to {content.id}")
+    await _send_content(message, content)
 
 
 async def _send_content(message: Message, content: Content) -> None:

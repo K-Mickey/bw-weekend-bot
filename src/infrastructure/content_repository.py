@@ -5,6 +5,14 @@ from src.domain.aggregates import Content
 from src.domain.factories.node_factory import node_factory
 
 
+class ContentException(Exception):
+    pass
+
+
+class ContentNotFoundException(ContentException):
+    pass
+
+
 class ContentRepository:
     @staticmethod
     def get_node(node_id: str) -> Content | None:

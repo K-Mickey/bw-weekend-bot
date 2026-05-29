@@ -176,12 +176,3 @@ async def test_handle_text_message(mock_msg, mock_navigate, mock_send_content, m
     mock_send_content.assert_called_once_with(mock_msg, menu_example)
     mock_msg.answer.assert_not_awaited()
     mock_cmd_start.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_handle_error_message(mock_msg, mock_navigate, mock_send_content, mock_cmd_start):
-    mock_navigate.side_effect = ValueError("Error")
-    await handle_text_message(mock_msg)
-    mock_send_content.assert_not_awaited()
-    mock_msg.answer.assert_awaited_once()
-    mock_cmd_start.assert_awaited_once()
