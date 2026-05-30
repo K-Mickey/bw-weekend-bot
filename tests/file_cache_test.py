@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import sleep
 from datetime import datetime
 from pathlib import Path
 
@@ -89,7 +89,7 @@ async def test_expiration(cache, cache_key, make_cache_record):
     await cache.add(cache_key, record)
     fetched = await cache.get(cache_key)
     assert fetched.file_id == "exp"
-    await asyncio.sleep(1.1)
+    await sleep(1.1)
 
     with pytest.raises(MediaCacheExpired):
         await cache.get(cache_key)
@@ -156,3 +156,25 @@ async def test_get_many(cache, make_cache_key, make_cache_record):
     assert fetched[cache_keys[0]].file_id == records[0].file_id
     assert fetched[cache_keys[1]].file_id == records[1].file_id
     assert len(cache._store) == 3
+
+
+@pytest.mark.asyncio
+async def test_get_many_miss_raises(cache, make_cache_key):
+    cache_keys = (make_cache_key(key="temp1"), make_cache_key(key="temp2"))
+    with pytest.raises(MediaCacheMiss):
+        await cache.get_many(cache_keys)
+
+
+@pytest.mark.asyncio
+async def test_get_many_with_expiration(cache, make_cache_key, make_cache_record):
+    cache_keys = (make_cache_key(key="temp1"), make_cache_key(key="temp2"))
+    records = (make_cache_record(file_id="123"), make_cache_record(file_id="234", expires=1))
+    for cache_key, record in zip(cache_keys, records):
+        await cache.add(cache_key, record)
+
+    fetched = await cache.get_many(cache_keys)
+    assert len(fetched) == 2
+
+    await sleep(1.1)
+    with pytest.raises(MediaCacheExpired):
+        await cache.get_many(cache_keys)

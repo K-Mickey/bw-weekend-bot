@@ -28,17 +28,20 @@ class InMemoryMediaCache(MediaCache):
 
     async def get(self, cache_key: CacheKey) -> CacheRecord:
         async with self._store_lock:
-            try:
-                record = self._store[cache_key]
-                if not self.check_expiration(record):
-                    raise MediaCacheExpired(f"Cache miss for {cache_key}")
-                return record
-            except KeyError:
-                raise MediaCacheMiss(f"Cache miss for {cache_key}")
+            return self._get_unsafe(cache_key)
 
     async def get_many(self, cache_keys: Sequence[CacheKey]) -> dict[CacheKey, CacheRecord]:
         async with self._store_lock:
-            return {key: self._store[key] for key in cache_keys if key in self._store}
+            return {key: self._get_unsafe(key) for key in cache_keys}
+
+    def _get_unsafe(self, cache_key: CacheKey) -> CacheRecord:
+        try:
+            record = self._store[cache_key]
+            if not self.check_expiration(record):
+                raise MediaCacheExpired(f"Cache miss for {cache_key}")
+            return record
+        except KeyError:
+            raise MediaCacheMiss(f"Cache miss for {cache_key}")
 
     async def add(self, cache_key: CacheKey, cache_record: CacheRecord) -> None:
         async with self._store_lock:
