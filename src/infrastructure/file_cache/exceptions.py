@@ -1,4 +1,4 @@
-class MediaCacheError(RuntimeError):
+class MediaCacheError(BaseException):
     """Base exception for cache‑related problems."""
 
 

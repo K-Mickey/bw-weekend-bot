@@ -1,9 +1,18 @@
 import logging
+from typing import Iterable
 
 from aiogram import F, Router
-from aiogram.exceptions import TelegramForbiddenError
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.filters import Command, CommandStart
-from aiogram.types import ErrorEvent, FSInputFile, KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.types import (
+    ErrorEvent,
+    FSInputFile,
+    InputMediaPhoto,
+    InputMediaVideo,
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+)
 
 from src.application.usecases.get_content import get_content_by_id
 from src.application.usecases.navigate import navigate
@@ -17,8 +26,8 @@ from src.domain.value_objects.network import Network
 from src.domain.value_objects.nodes import NodeName
 from src.infrastructure.content_repository import ContentNotFoundException
 from src.infrastructure.file_cache import get_cache
+from src.infrastructure.file_cache.exceptions import MediaCacheError
 from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
-from src.infrastructure.file_cache.value_objects.cache_media_type import CacheMediaType
 from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
 from src.infrastructure.file_provider import get_file_path
 
@@ -107,10 +116,12 @@ async def _send_content(message: Message, content: Content) -> None:
 
     posts = content.content if isinstance(content, MenuNode) else [content]
     for post in posts:
-        keyboard = _create_keyboard(post)
-        logger.debug(f"Created keyboard: {keyboard}")
-
-        for media in post.media:
+        if len(post.media) == 0:
+            logger.warning("Post has no media")
+        elif len(post.media) == 1:
+            [media] = post.media
+            keyboard = _create_keyboard(post)
+            logger.debug(f"Created keyboard: {keyboard}")
             match media:
                 case TextNode():
                     await message.answer(media.text, reply_markup=keyboard)
@@ -120,6 +131,8 @@ async def _send_content(message: Message, content: Content) -> None:
                     await _send_video_with_cache(message, media, keyboard)
                 case _:
                     raise ValueError(f"Unsupported media type: {media}")
+        else:
+            await _send_group_media_with_cache(message, post.media)
 
 
 def _create_keyboard(content: PostNode) -> ReplyKeyboardMarkup:
@@ -137,11 +150,7 @@ async def _send_photo_with_cache(
 ):
     cache = await get_cache()
 
-    cache_key = CacheKey(
-        media_type=CacheMediaType.PHOTO,
-        network=Network.TELEGRAM,
-        key=photo.url,
-    )
+    cache_key = CacheKey.create(photo, Network.TELEGRAM)
 
     try:
         cache_record = await cache.get(cache_key)
@@ -150,7 +159,7 @@ async def _send_photo_with_cache(
             caption=photo.description,
             reply_markup=keyboard,
         )
-    except Exception:
+    except (TelegramBadRequest, MediaCacheError):
         file_path = get_file_path(photo)
         file = FSInputFile(file_path)
         photo_message = await message.answer_photo(
@@ -159,13 +168,7 @@ async def _send_photo_with_cache(
             reply_markup=keyboard,
         )
 
-        file_id = photo_message.photo[-1].file_id
-        cache_record = CacheRecord.from_file(
-            file_id=file_id,
-            file_path=file_path,
-        )
-
-        await cache.add(cache_key, cache_record)
+        await _update_cache_from_messages([photo], [photo_message])
 
 
 async def _send_video_with_cache(
@@ -175,11 +178,7 @@ async def _send_video_with_cache(
 ):
     cache = await get_cache()
 
-    cache_key = CacheKey(
-        media_type=CacheMediaType.VIDEO,
-        network=Network.TELEGRAM,
-        key=video.url,
-    )
+    cache_key = CacheKey.create(video, Network.TELEGRAM)
 
     try:
         cache_record = await cache.get(cache_key)
@@ -188,7 +187,7 @@ async def _send_video_with_cache(
             caption=video.description,
             reply_markup=keyboard,
         )
-    except Exception:
+    except (TelegramBadRequest, MediaCacheError):
         file_path = get_file_path(video)
         file = FSInputFile(file_path)
         video_message = await message.answer_video(
@@ -197,10 +196,78 @@ async def _send_video_with_cache(
             reply_markup=keyboard,
         )
 
-        file_id = video_message.video.file_id
-        cache_record = CacheRecord.from_file(
-            file_id=file_id,
-            file_path=file_path,
-        )
+        await _update_cache_from_messages([video], [video_message])
 
-        await cache.add(cache_key, cache_record)
+
+async def _send_group_media_with_cache(
+    message: Message,
+    media: list[PhotoNode | VideoNode],
+):
+
+    media_list, has_update_cache = await _build_media_list(media, from_cache=True)
+    try:
+        messages = await message.answer_media_group(media_list)
+        if has_update_cache:
+            await _update_cache_from_messages(media, messages)
+
+    except TelegramBadRequest:
+        media_list, _ = await _build_media_list(media, from_cache=False)
+        messages = await message.answer_media_group(media_list)
+        await _update_cache_from_messages(media, messages)
+
+
+async def _build_media_list(
+    media: list[PhotoNode | VideoNode],
+    from_cache: bool = False,
+) -> tuple[list[InputMediaPhoto | InputMediaVideo], bool]:
+
+    cache = await get_cache()
+
+    result = []
+    has_update_cache = False
+    for node in media:
+        media_source = None
+
+        if from_cache:
+            try:
+                cache_key = CacheKey.create(node, Network.TELEGRAM)
+                cache_record = await cache.get(cache_key)
+                media_source = cache_record.file_id
+
+            except MediaCacheError as e:
+                has_update_cache = True
+                logger.debug(e)
+
+        if not media_source:
+            media_source = FSInputFile(get_file_path(node))
+
+        match node:
+            case PhotoNode():
+                item = InputMediaPhoto(media=media_source, caption=node.description)
+            case VideoNode():
+                item = InputMediaVideo(media=media_source, caption=node.description)
+            case _:
+                raise ValueError(f"Unsupported media type: {node}")
+
+        result.append(item)
+    return result, has_update_cache
+
+
+async def _update_cache_from_messages(
+    media: Iterable[PhotoNode | VideoNode],
+    messages: Iterable[Message],
+) -> None:
+    cache = await get_cache()
+
+    for message, node in zip(messages, media):
+        cache_key = CacheKey.create(node, Network.TELEGRAM)
+
+        if message.photo:
+            new_file_id = message.photo[-1].file_id
+        elif message.video:
+            new_file_id = message.video.file_id
+        else:
+            logger.warning(f"No media found in message: {message}")
+
+        record = CacheRecord.from_file(file_id=new_file_id, file_path=get_file_path(node))
+        await cache.add(cache_key, record)
