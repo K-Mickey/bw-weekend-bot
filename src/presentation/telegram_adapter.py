@@ -7,12 +7,12 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     ErrorEvent,
     FSInputFile,
-    InputMediaPhoto,
-    InputMediaVideo,
+    InputFile,
     KeyboardButton,
     Message,
     ReplyKeyboardMarkup,
 )
+from aiogram.utils.media_group import MediaGroupBuilder
 
 from src.application.usecases.get_content import get_content_by_id
 from src.application.usecases.navigate import navigate
@@ -149,30 +149,31 @@ async def _send_photo_with_cache(
     photo: PhotoNode,
     keyboard: ReplyKeyboardMarkup | None = None,
 ):
-    cache = await get_cache()
-
-    cache_key = CacheKey.create(photo, Network.TELEGRAM)
+    media_source, is_from_cache = await _get_media_source(photo)
 
     try:
-        cache_record = await cache.get(cache_key)
         await message.answer_photo(
-            photo=cache_record.file_id,
+            photo=media_source,
             caption=photo.description,
             reply_markup=keyboard,
         )
-    except (TelegramBadRequest, MediaCacheError):
-        file_path = get_file_path(photo)
-        file = FSInputFile(file_path)
-        photo_message = await message.answer_photo(
-            photo=file,
-            caption=photo.description,
-            reply_markup=keyboard,
-        )
+        if not is_from_cache:
+            await _safe_update_cache(photo, message)
 
-        try:
-            await _update_cache_from_messages([photo], [photo_message])
-        except Exception as e:
-            logger.error(f"Failed to update cache for photo {photo.url}: {e}")
+        return
+
+    except TelegramBadRequest as e:
+        logger.debug(f"Failed to send photo {photo.url}: {e}")
+
+    media_source, _ = await _get_media_source(photo, from_cache=False)
+
+    photo_message = await message.answer_photo(
+        photo=media_source,
+        caption=photo.description,
+        reply_markup=keyboard,
+    )
+
+    await _safe_update_cache(photo, photo_message)
 
 
 async def _send_video_with_cache(
@@ -180,30 +181,47 @@ async def _send_video_with_cache(
     video: VideoNode,
     keyboard: ReplyKeyboardMarkup | None = None,
 ):
-    cache = await get_cache()
-
-    cache_key = CacheKey.create(video, Network.TELEGRAM)
+    media_source, is_from_cache = await _get_media_source(video)
 
     try:
-        cache_record = await cache.get(cache_key)
-        await message.answer_video(
-            video=cache_record.file_id,
-            caption=video.description,
-            reply_markup=keyboard,
-        )
-    except (TelegramBadRequest, MediaCacheError):
-        file_path = get_file_path(video)
-        file = FSInputFile(file_path)
         video_message = await message.answer_video(
-            video=file,
+            video=media_source,
             caption=video.description,
             reply_markup=keyboard,
         )
+        if not is_from_cache:
+            await _safe_update_cache(video, video_message)
 
+        return
+
+    except TelegramBadRequest as e:
+        logger.debug(f"Failed to send video {video.url}: {e}")
+
+    media_source, _ = await _get_media_source(video, from_cache=False)
+    video_message = await message.answer_video(
+        video=media_source,
+        caption=video.description,
+        reply_markup=keyboard,
+    )
+    await _safe_update_cache(video, video_message)
+
+
+async def _get_media_source(media: PhotoNode | VideoNode, from_cache: bool = True) -> tuple[str | InputFile, bool]:
+    """
+    :return: (file_id, is_from_cache) where is_from_cache is True if the file was retrieved from cache
+    """
+    cache = await get_cache()
+    cache_key = CacheKey.create(media, Network.TELEGRAM)
+    if from_cache:
         try:
-            await _update_cache_from_messages([video], [video_message])
-        except Exception as e:
-            logger.error(f"Failed to update cache for video {video.url}: {e}")
+            cache_record = await cache.get(cache_key)
+            return cache_record.file_id, True
+
+        except MediaCacheError as e:
+            logger.debug(e)
+
+    file_path = get_file_path(media)
+    return FSInputFile(file_path), False
 
 
 async def _send_group_media_with_cache(
@@ -211,33 +229,27 @@ async def _send_group_media_with_cache(
     media: list[PhotoNode | VideoNode],
 ):
 
-    media_list, has_update_cache = await _build_media_list(media, from_cache=True)
+    album, is_from_cache = await _build_album(media, from_cache=True)
     try:
-        messages = await message.answer_media_group(media_list)
-        if has_update_cache:
-            try:
-                await _update_cache_from_messages(media, messages)
-            except Exception as e:
-                logger.error(f"Failed to update cache for media group (cached): {e}")
+        messages = await message.answer_media_group(album.build())
+        if not is_from_cache:
+            await _safe_update_cache(media, messages)
 
     except TelegramBadRequest:
-        media_list, _ = await _build_media_list(media, from_cache=False)
-        messages = await message.answer_media_group(media_list)
-        try:
-            await _update_cache_from_messages(media, messages)
-        except Exception as e:
-            logger.error(f"Failed to update cache for media group (file): {e}")
+        album, _ = await _build_album(media, from_cache=False)
+        messages = await message.answer_media_group(album.build())
+        await _safe_update_cache(media, messages)
 
 
-async def _build_media_list(
+async def _build_album(
     media: list[PhotoNode | VideoNode],
     from_cache: bool = False,
-) -> tuple[list[InputMediaPhoto | InputMediaVideo], bool]:
+) -> tuple[MediaGroupBuilder, bool]:
 
     cache = await get_cache()
 
-    result = []
-    has_update_cache = False
+    album = MediaGroupBuilder()
+    is_from_cache = False
     for node in media:
         media_source = None
 
@@ -246,9 +258,9 @@ async def _build_media_list(
                 cache_key = CacheKey.create(node, Network.TELEGRAM)
                 cache_record = await cache.get(cache_key)
                 media_source = cache_record.file_id
+                is_from_cache = True
 
             except MediaCacheError as e:
-                has_update_cache = True
                 logger.debug(e)
 
         if not media_source:
@@ -256,14 +268,25 @@ async def _build_media_list(
 
         match node:
             case PhotoNode():
-                item = InputMediaPhoto(media=media_source, caption=node.description)
+                album.add_photo(media_source, caption=node.description)
             case VideoNode():
-                item = InputMediaVideo(media=media_source, caption=node.description)
+                album.add_video(media_source, caption=node.description)
             case _:
                 raise ValueError(f"Unsupported media type: {node}")
 
-        result.append(item)
-    return result, has_update_cache
+    return album, is_from_cache
+
+
+async def _safe_update_cache(
+    media: PhotoNode | VideoNode | list[PhotoNode | VideoNode],
+    message: Message | list[Message],
+):
+    media = media if isinstance(media, list) else [media]
+    message = message if isinstance(message, list) else [message]
+    try:
+        await _update_cache_from_messages(media, message)
+    except Exception as e:
+        logger.error(f"Failed to update cache for media: {e}")
 
 
 async def _update_cache_from_messages(
