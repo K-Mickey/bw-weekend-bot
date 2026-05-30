@@ -1,4 +1,4 @@
-from unittest.mock import ANY, AsyncMock, MagicMock, Mock, call, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from aiogram.types import KeyboardButton
@@ -55,15 +55,9 @@ def mock_cmd_start():
 
 
 @pytest.fixture
-def mock_send_photo_with_cache():
-    with patch(f"{PREFIX}._send_photo_with_cache", AsyncMock()) as mock_send_photo_with_cache:
-        yield mock_send_photo_with_cache
-
-
-@pytest.fixture
-def mock_send_video_with_cache():
-    with patch(f"{PREFIX}._send_video_with_cache", AsyncMock()) as mock_send_video_with_cache:
-        yield mock_send_video_with_cache
+def mock_send_group_media_with_cache():
+    with patch(f"{PREFIX}._send_group_media_with_cache", AsyncMock()) as mock_send_group_media_with_cache:
+        yield mock_send_group_media_with_cache
 
 
 @pytest.fixture
@@ -113,12 +107,10 @@ async def test_send_text_content(menu_node, mock_msg, mock_create_keyboard):
 
 
 @pytest.mark.asyncio
-async def test_send_media_content(menu_node, mock_msg, mock_send_photo_with_cache, mock_send_video_with_cache):
+async def test_send_media_content(menu_node, mock_msg, mock_send_group_media_with_cache):
     post = menu_node.content[1]
     await _send_content(mock_msg, post)
-
-    mock_send_photo_with_cache.assert_awaited_once_with(mock_msg, post.media[0], ANY)
-    mock_send_video_with_cache.assert_awaited_once_with(mock_msg, post.media[1], ANY)
+    mock_send_group_media_with_cache.assert_awaited_once_with(mock_msg, post.media)
 
 
 @pytest.mark.asyncio
@@ -126,16 +118,14 @@ async def test_send_menu_content(
     menu_node,
     mock_msg,
     mock_create_keyboard,
-    mock_send_photo_with_cache,
-    mock_send_video_with_cache,
+    mock_send_group_media_with_cache,
 ):
 
     await _send_content(mock_msg, menu_node)
 
-    mock_create_keyboard.assert_has_calls([call(menu_node.content[0]), call(menu_node.content[1])])
+    mock_create_keyboard.assert_called_once_with(menu_node.content[0])
     mock_msg.answer.assert_awaited_once_with("Hello world", reply_markup=[])
-    mock_send_photo_with_cache.assert_awaited_once()
-    mock_send_video_with_cache.assert_awaited_once()
+    mock_send_group_media_with_cache.assert_awaited_once_with(mock_msg, menu_node.content[1].media)
 
 
 @pytest.mark.asyncio

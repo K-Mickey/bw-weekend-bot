@@ -49,7 +49,7 @@ async def handle_errors(event: ErrorEvent) -> None:
         logger.error(f"Unknown update type: {update}")
 
     if isinstance(event.exception, TelegramForbiddenError):
-        logging.warning("User blocked the bot.")
+        logger.warning("User blocked the bot.")
         return
 
     if message:
@@ -61,8 +61,9 @@ async def handle_errors(event: ErrorEvent) -> None:
             logger.error("Create error node")
             return
         except Exception as e:
-            logging.error(f"Error: {e}")
-            logging.exception(f"Error while sending error message to user {chat_id}")
+            logger.error(f"Error: {e}")
+            logger.exception(f"Error while sending error message to user {chat_id}")
+            return
 
 
 @router.message(CommandStart())
@@ -119,18 +120,18 @@ async def _send_content(message: Message, content: Content) -> None:
         if len(post.media) == 0:
             logger.warning("Post has no media")
         elif len(post.media) == 1:
-            [media] = post.media
+            [media_item] = post.media
             keyboard = _create_keyboard(post)
             logger.debug(f"Created keyboard: {keyboard}")
-            match media:
+            match media_item:
                 case TextNode():
-                    await message.answer(media.text, reply_markup=keyboard)
+                    await message.answer(media_item.text, reply_markup=keyboard)
                 case PhotoNode():
-                    await _send_photo_with_cache(message, media, keyboard)
+                    await _send_photo_with_cache(message, media_item, keyboard)
                 case VideoNode():
-                    await _send_video_with_cache(message, media, keyboard)
+                    await _send_video_with_cache(message, media_item, keyboard)
                 case _:
-                    raise ValueError(f"Unsupported media type: {media}")
+                    raise ValueError(f"Unsupported media type: {media_item}")
         else:
             await _send_group_media_with_cache(message, post.media)
 
@@ -168,7 +169,10 @@ async def _send_photo_with_cache(
             reply_markup=keyboard,
         )
 
-        await _update_cache_from_messages([photo], [photo_message])
+        try:
+            await _update_cache_from_messages([photo], [photo_message])
+        except Exception as e:
+            logger.error(f"Failed to update cache for photo {photo.url}: {e}")
 
 
 async def _send_video_with_cache(
@@ -196,7 +200,10 @@ async def _send_video_with_cache(
             reply_markup=keyboard,
         )
 
-        await _update_cache_from_messages([video], [video_message])
+        try:
+            await _update_cache_from_messages([video], [video_message])
+        except Exception as e:
+            logger.error(f"Failed to update cache for video {video.url}: {e}")
 
 
 async def _send_group_media_with_cache(
@@ -208,12 +215,18 @@ async def _send_group_media_with_cache(
     try:
         messages = await message.answer_media_group(media_list)
         if has_update_cache:
-            await _update_cache_from_messages(media, messages)
+            try:
+                await _update_cache_from_messages(media, messages)
+            except Exception as e:
+                logger.error(f"Failed to update cache for media group (cached): {e}")
 
     except TelegramBadRequest:
         media_list, _ = await _build_media_list(media, from_cache=False)
         messages = await message.answer_media_group(media_list)
-        await _update_cache_from_messages(media, messages)
+        try:
+            await _update_cache_from_messages(media, messages)
+        except Exception as e:
+            logger.error(f"Failed to update cache for media group (file): {e}")
 
 
 async def _build_media_list(
