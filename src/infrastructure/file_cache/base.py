@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime, timedelta
-from typing import Self
+from typing import Self, Sequence
 
 from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
 from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
@@ -22,6 +22,10 @@ class MediaCache(abc.ABC):
         MediaCacheMiss
             If the key is not present in the cache.
         """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_many(self, cache_keys: Sequence[CacheKey]) -> dict[CacheKey, CacheRecord]:
         raise NotImplementedError
 
     @abc.abstractmethod

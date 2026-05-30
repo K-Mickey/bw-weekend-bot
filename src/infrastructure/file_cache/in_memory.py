@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import Self
+from typing import Self, Sequence
 
 from src.infrastructure.file_cache.base import (
     CacheRecord,
@@ -35,6 +35,10 @@ class InMemoryMediaCache(MediaCache):
                 return record
             except KeyError:
                 raise MediaCacheMiss(f"Cache miss for {cache_key}")
+
+    async def get_many(self, cache_keys: Sequence[CacheKey]) -> dict[CacheKey, CacheRecord]:
+        async with self._store_lock:
+            return {key: self._store[key] for key in cache_keys if key in self._store}
 
     async def add(self, cache_key: CacheKey, cache_record: CacheRecord) -> None:
         async with self._store_lock:
