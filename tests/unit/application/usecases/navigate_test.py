@@ -3,9 +3,6 @@ from unittest.mock import patch
 import pytest
 
 from src.application.usecases.navigate import navigate
-from src.domain.aggregates import PostNode
-from src.domain.aggregates.menu_node import MenuNode
-from src.domain.entities.button_type import ButtonType
 
 
 @pytest.fixture
@@ -20,120 +17,93 @@ def mock_get_content():
         yield mock
 
 
-def empty_node(node_id: str) -> MenuNode:
-    return MenuNode(
-        id=node_id,
-        content=[],
-    )
+def test_navigate_forward(
+    user_key,
+    session,
+    post_group,
+    get_content,
+    mock_store,
+    mock_get_content,
+):
+    post = get_content("post_simple.yaml")
+    post.keyboard[0][0].target = post_group.id
 
+    button_label = "Settings"
 
-def test_navigate_forward(user_key, session, mock_store, mock_get_content):
-    current_node_id = "node_a"
-    button_label = "Go to B"
-    target_node_id = "node_b"
-
-    mock_session = session
-    mock_session.history = ["main", current_node_id]
-
-    mock_current_node = MenuNode(
-        id=current_node_id,
-        content=[
-            PostNode(
-                id="some",
-                media=[],
-                keyboard=[
-                    [
-                        dict(text=button_label, target=target_node_id, type=ButtonType.DEFAULT),
-                        dict(text="Other", target="node_c"),
-                    ]
-                ],
-            )
-        ],
-    )
-
-    mock_target_response = empty_node(target_node_id)
-
-    mock_store.get_session.return_value = mock_session
-    mock_get_content.side_effect = [mock_current_node, mock_target_response]
+    session.history = ["main", post.id]
+    mock_store.get_session.return_value = session
+    mock_get_content.side_effect = [post, post_group]
 
     result = navigate(user_key.network, user_key.external_id, button_label)
 
-    mock_store.push_node.assert_called_once_with(user_key, target_node_id)
-    assert result == mock_target_response
+    mock_store.push_node.assert_called_once_with(user_key, post_group.id)
+    assert result == post_group
 
 
-def test_navigate_back(user_key, session, mock_store, mock_get_content):
-    current_node_id = "node_x"
-    button_label = "Back"
-    mock_session = session
-    mock_session.history = ["main", "node_a", current_node_id]
+def test_navigate_back(
+    user_key,
+    session,
+    post_group,
+    get_content,
+    mock_store,
+    mock_get_content,
+):
+    back_post = get_content("post_back.yaml")
+    back_post.keyboard[0][0].target = post_group.id
 
-    mock_current_node = MenuNode(
-        id=current_node_id,
-        content=[
-            PostNode(
-                id="some",
-                media=[],
-                keyboard=[[dict(text=button_label, target="node_a", type=ButtonType.BACK)]],
-            )
-        ],
-    )
-
-    mock_expected_response = empty_node("node_a")
-
-    mock_store.get_session.return_value = mock_session
+    session.history = ["main", post_group.id, "other"]
+    mock_store.get_session.return_value = session
 
     def mock_pop_node(key):
-        if mock_session.history:
-            return mock_session.history.pop()
+        if session.history:
+            return session.history.pop()
         return None
 
     mock_store.pop_node.side_effect = mock_pop_node
-    mock_get_content.side_effect = [mock_current_node, mock_expected_response]
+    mock_get_content.side_effect = [back_post, post_group]
 
-    result = navigate(user_key.network, user_key.external_id, button_label)
+    result = navigate(user_key.network, user_key.external_id, "Back")
 
     mock_store.pop_node.assert_called_once_with(user_key)
-    assert result == mock_expected_response
+    assert result == post_group
 
 
-def test_navigate_back_at_root(user_key, session, mock_store, mock_get_content):
-    current_node_id = "main"
-    button_label = "Back"
+def test_navigate_back_at_root(
+    user_key,
+    session,
+    get_content,
+    mock_store,
+    mock_get_content,
+):
+    post = get_content("post_back.yaml")
+    post.id = "main"
+    post.keyboard[0][0].target = "main"
 
     mock_session = session
     mock_session.history = ["main"]
 
-    mock_response = MenuNode(
-        id=current_node_id,
-        content=[
-            PostNode(
-                id="some",
-                media=[],
-                keyboard=[[dict(text=button_label, target="main", type=ButtonType.BACK)]],
-            )
-        ],
-    )
     mock_store.get_session.return_value = mock_session
     mock_store.pop_node.return_value = None
-    mock_get_content.side_effect = [mock_response, mock_response]
+    mock_get_content.side_effect = [post, post]
 
-    result = navigate(user_key.network, user_key.external_id, button_label)
+    result = navigate(user_key.network, user_key.external_id, "Back")
 
     mock_store.pop_node.assert_called_once_with(user_key)
-    assert result == mock_response
+    assert result == post
 
 
-def test_navigate_invalid_button(user_key, session, mock_store, mock_get_content):
-    current_node_id = "node_id"
+def test_navigate_invalid_button(
+    user_key,
+    session,
+    post_group,
+    mock_store,
+    mock_get_content,
+):
     button_label = "NonExistentButton"
-    mock_session = session
-    mock_session.history = ["main", current_node_id]
+    session.history = ["main", post_group.id]
 
-    mock_current_node = empty_node(current_node_id)
-
-    mock_store.get_session.return_value = mock_session
-    mock_get_content.return_value = mock_current_node
+    mock_store.get_session.return_value = session
+    mock_get_content.return_value = post_group
 
     with pytest.raises(ValueError) as exc_info:
         navigate(user_key.network, user_key.external_id, button_label)

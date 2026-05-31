@@ -1,6 +1,6 @@
 import pytest
 
-from src.domain.entities.media import PhotoNode, VideoNode
+from src.domain.entities.media import Photo, Video
 from src.infrastructure.file_provider import FileNotFound, FileProviderError, get_file_path
 
 
@@ -34,13 +34,13 @@ def patch_video_dir(video_dir):
 
 
 def test_get_photo_success(patch_photo_dir):
-    media = PhotoNode(url="exist.jpg")
+    media = Photo(url="exist.jpg")
     result = get_file_path(media)
     assert result == patch_photo_dir / "exist.jpg"
 
 
 def test_get_video_success(patch_video_dir):
-    media = VideoNode(url="exist.mp4")
+    media = Video(url="exist.mp4")
     result = get_file_path(media)
     assert result == patch_video_dir / "exist.mp4"
 
@@ -53,6 +53,6 @@ def test_get_unsupported_media():
 
 @pytest.mark.asyncio
 async def test_get_file_not_found():
-    media = PhotoNode(url="non_exist.jpg")
+    media = Photo(url="non_exist.jpg")
     with pytest.raises(FileNotFound):
         get_file_path(media)

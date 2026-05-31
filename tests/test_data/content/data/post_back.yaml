@@ -1,0 +1,8 @@
+id: post
+media:
+  - type: text
+    text: Hello world
+keyboard:
+  - - text: "Back"
+      target: back
+      type: back

@@ -1,0 +1,8 @@
+id: post
+media:
+  - type: text
+    text: Hello world
+keyboard:
+  - - text: "Main"
+      target: main
+      type: main_menu

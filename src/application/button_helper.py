@@ -1,10 +1,8 @@
-from src.domain.aggregates import Content, PostNode
-from src.domain.aggregates.menu_node import MenuNode
-from src.domain.entities.button_type import ButtonType
+from src.domain.aggregates import Content, Post, PostGroup
 from src.domain.entities.keyboard import Keyboard, KeyboardButton, KeyboardRow
-from src.domain.value_objects.buttons import Button
-from src.domain.value_objects.nodes import NodeName
-from src.domain.value_objects.user_session import UserSession
+from src.domain.entities.user_session import UserSession
+from src.domain.value_objects.button import BaseButton, ButtonType
+from src.domain.value_objects.node import NodeName
 
 
 def add_automatic_buttons(node: Content, session: UserSession) -> Content:
@@ -19,8 +17,8 @@ def add_automatic_buttons(node: Content, session: UserSession) -> Content:
     - Back button target = session.history[-2] (previous node)
     - Main menu button target = NodeName.ROOT
     """
-    if isinstance(node, MenuNode):
-        content = node.content
+    if isinstance(node, PostGroup):
+        content = node.posts
     else:
         content = [node]
 
@@ -30,7 +28,7 @@ def add_automatic_buttons(node: Content, session: UserSession) -> Content:
     return node
 
 
-def _form_keyboard(node: PostNode, session: UserSession) -> Keyboard:
+def _form_keyboard(node: Post, session: UserSession) -> Keyboard:
     keyboard = node.keyboard.model_copy(deep=True)
 
     if not node.flags.build:
@@ -41,7 +39,7 @@ def _form_keyboard(node: PostNode, session: UserSession) -> Keyboard:
         main_target = NodeName.ROOT
         buttons.append(
             KeyboardButton(
-                text=Button.MAIN_MENU,
+                text=BaseButton.MAIN_MENU,
                 target=main_target,
                 type=ButtonType.MAIN_MENU,
             )
@@ -51,7 +49,7 @@ def _form_keyboard(node: PostNode, session: UserSession) -> Keyboard:
         back_target = session.history[-2]
         buttons.append(
             KeyboardButton(
-                text=Button.BACK,
+                text=BaseButton.BACK,
                 target=back_target,
                 type=ButtonType.BACK,
             )

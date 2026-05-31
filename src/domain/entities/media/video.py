@@ -1,9 +1,12 @@
 from pydantic import BaseModel, Field, field_validator
 
 
-class PhotoNode(BaseModel):
+class Video(BaseModel):
     url: str = Field(...)
     description: str | None = None
+
+    def __repr__(self):
+        return f"VideoNode({self.url}, {self.description})"
 
     @field_validator("description")
     @classmethod

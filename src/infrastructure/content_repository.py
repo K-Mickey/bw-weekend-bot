@@ -2,7 +2,7 @@ import yaml
 
 from src.config import settings
 from src.domain.aggregates import Content
-from src.domain.factories.node_factory import node_factory
+from src.domain.factories import content_factory
 
 
 class ContentException(Exception):
@@ -26,7 +26,7 @@ class ContentRepository:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 raw = yaml.safe_load(f)
-            return node_factory(raw)
+            return content_factory(raw)
         except Exception as e:
             # In case of YAML parsing error or factory error, return None
             print(e)

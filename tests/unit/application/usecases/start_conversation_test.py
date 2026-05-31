@@ -3,8 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from src.application.usecases.start_conversation import start_conversation
-from src.domain.aggregates import PostNode
-from src.domain.value_objects.nodes import NodeName
+from src.domain.value_objects.node import NodeName
 
 PREFIX = "src.application.usecases.start_conversation"
 
@@ -23,17 +22,18 @@ def mock_get_current_content():
 
 def test_start_conversation_creates_session_and_returns_content(
     user_key,
+    post,
     mock_state_store,
     mock_get_current_content,
 ):
-    root_node = PostNode(id=NodeName.ROOT, media=[])
-    mock_get_current_content.return_value = root_node
+    post.id = NodeName.ROOT
+    mock_get_current_content.return_value = post
 
     result = start_conversation(user_key.network, user_key.external_id)
 
     mock_state_store.create_or_reset.assert_called_once_with(user_key, NodeName.ROOT)
     mock_get_current_content.assert_called_once_with(user_key)
-    assert result == root_node
+    assert result == post
 
 
 def test_start_conversation_handles_get_content_error(

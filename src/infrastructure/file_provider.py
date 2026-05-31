@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from src.config import settings
-from src.domain.entities.media import MediaItem, PhotoNode, VideoNode
+from src.domain.entities.media import MediaItem, Photo, Video
 
 
 class FileProviderError(RuntimeError):
@@ -14,9 +14,9 @@ class FileNotFound(FileProviderError):
 
 def get_file_path(media: MediaItem) -> Path:
     match media:
-        case PhotoNode():
+        case Photo():
             folder = settings.content_photo_dir
-        case VideoNode():
+        case Video():
             folder = settings.content_video_dir
         case _:
             raise FileProviderError(f"Unsupported media type: {media}")

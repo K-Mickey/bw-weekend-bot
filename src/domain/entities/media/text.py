@@ -1,8 +1,11 @@
 from pydantic import BaseModel, Field, field_validator
 
 
-class TextNode(BaseModel):
+class Text(BaseModel):
     text: str = Field(...)
+
+    def __repr__(self):
+        return f"TextNode({self.text})"
 
     @field_validator("text")
     @classmethod

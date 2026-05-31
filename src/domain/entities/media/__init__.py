@@ -1,7 +1,8 @@
 from typing import TypeAlias
 
-from src.domain.entities.media.photo_node import PhotoNode
-from src.domain.entities.media.text_node import TextNode
-from src.domain.entities.media.video_node import VideoNode
+from .photo import Photo
+from .text import Text
+from .video import Video
 
-MediaItem: TypeAlias = PhotoNode | VideoNode | TextNode
+MediaType: TypeAlias = Photo | Video
+MediaItem: TypeAlias = Photo | Video | Text

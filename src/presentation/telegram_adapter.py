@@ -17,13 +17,11 @@ from aiogram.utils.media_group import MediaGroupBuilder
 from src.application.usecases.get_content import get_content_by_id
 from src.application.usecases.navigate import navigate
 from src.application.usecases.start_conversation import start_conversation
-from src.domain.aggregates import Content, PostNode
-from src.domain.aggregates.menu_node import MenuNode
-from src.domain.entities.media.photo_node import PhotoNode
-from src.domain.entities.media.text_node import TextNode
-from src.domain.entities.media.video_node import VideoNode
+from src.domain.aggregates import Content, Post, PostGroup
+from src.domain.entities import MediaGroup
+from src.domain.entities.media import MediaType, Photo, Text, Video
 from src.domain.value_objects.network import Network
-from src.domain.value_objects.nodes import NodeName
+from src.domain.value_objects.node import NodeName
 from src.infrastructure.content_repository import ContentNotFoundException
 from src.infrastructure.file_cache import get_cache
 from src.infrastructure.file_cache.exceptions import MediaCacheError
@@ -115,28 +113,27 @@ async def handle_text_message(message: Message) -> None:
 async def _send_content(message: Message, content: Content) -> None:
     logger.debug("Send content is called")
 
-    posts = content.content if isinstance(content, MenuNode) else [content]
+    posts = content.posts if isinstance(content, PostGroup) else [content]
     for post in posts:
-        if len(post.media) == 0:
-            logger.warning("Post has no media")
-        elif len(post.media) == 1:
-            [media_item] = post.media
+        if not isinstance(post.media, MediaGroup):
             keyboard = _create_keyboard(post)
             logger.debug(f"Created keyboard: {keyboard}")
-            match media_item:
-                case TextNode():
-                    await message.answer(media_item.text, reply_markup=keyboard)
-                case PhotoNode():
-                    await _send_photo_with_cache(message, media_item, keyboard)
-                case VideoNode():
-                    await _send_video_with_cache(message, media_item, keyboard)
-                case _:
-                    raise ValueError(f"Unsupported media type: {media_item}")
-        else:
-            await _send_group_media_with_cache(message, post.media)
+
+        media = post.media
+        match media:
+            case MediaGroup():
+                await _send_group_media_with_cache(message, media)
+            case Text():
+                await message.answer(media.text, reply_markup=keyboard)
+            case Photo():
+                await _send_photo_with_cache(message, media, keyboard)
+            case Video():
+                await _send_video_with_cache(message, media, keyboard)
+            case _:
+                raise ValueError(f"Unsupported media type: {media}")
 
 
-def _create_keyboard(content: PostNode) -> ReplyKeyboardMarkup:
+def _create_keyboard(content: Post) -> ReplyKeyboardMarkup:
     rows = []
     for row in content.keyboard:
         buttons = [KeyboardButton(text=btn.text) for btn in row]
@@ -146,7 +143,7 @@ def _create_keyboard(content: PostNode) -> ReplyKeyboardMarkup:
 
 async def _send_photo_with_cache(
     message: Message,
-    photo: PhotoNode,
+    photo: Photo,
     keyboard: ReplyKeyboardMarkup | None = None,
 ):
     media_source, is_from_cache = await _get_media_source(photo)
@@ -178,7 +175,7 @@ async def _send_photo_with_cache(
 
 async def _send_video_with_cache(
     message: Message,
-    video: VideoNode,
+    video: Video,
     keyboard: ReplyKeyboardMarkup | None = None,
 ):
     media_source, is_from_cache = await _get_media_source(video)
@@ -206,7 +203,7 @@ async def _send_video_with_cache(
     await _safe_update_cache(video, video_message)
 
 
-async def _get_media_source(media: PhotoNode | VideoNode, from_cache: bool = True) -> tuple[str | InputFile, bool]:
+async def _get_media_source(media: MediaType, from_cache: bool = True) -> tuple[str | InputFile, bool]:
     """
     :return: (file_id, is_from_cache) where is_from_cache is True if the file was retrieved from cache
     """
@@ -226,7 +223,7 @@ async def _get_media_source(media: PhotoNode | VideoNode, from_cache: bool = Tru
 
 async def _send_group_media_with_cache(
     message: Message,
-    media: list[PhotoNode | VideoNode],
+    media: MediaGroup,
 ):
 
     album, is_from_cache = await _build_album(media, from_cache=True)
@@ -242,7 +239,7 @@ async def _send_group_media_with_cache(
 
 
 async def _build_album(
-    media: list[PhotoNode | VideoNode],
+    media: MediaGroup,
     from_cache: bool = False,
 ) -> tuple[MediaGroupBuilder, bool]:
 
@@ -267,9 +264,9 @@ async def _build_album(
             media_source = FSInputFile(get_file_path(node))
 
         match node:
-            case PhotoNode():
+            case Photo():
                 album.add_photo(media_source, caption=node.description)
-            case VideoNode():
+            case Video():
                 album.add_video(media_source, caption=node.description)
             case _:
                 raise ValueError(f"Unsupported media type: {node}")
@@ -278,8 +275,8 @@ async def _build_album(
 
 
 async def _safe_update_cache(
-    media: PhotoNode | VideoNode | list[PhotoNode | VideoNode],
-    message: Message | list[Message],
+    media: MediaType | Iterable[MediaType],
+    message: Message | Iterable[Message],
 ):
     media = media if isinstance(media, list) else [media]
     message = message if isinstance(message, list) else [message]
@@ -290,7 +287,7 @@ async def _safe_update_cache(
 
 
 async def _update_cache_from_messages(
-    media: Iterable[PhotoNode | VideoNode],
+    media: Iterable[MediaType],
     messages: Iterable[Message],
 ) -> None:
     cache = await get_cache()

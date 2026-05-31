@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
+from src.domain.entities.user_session import UserSession
 from src.domain.value_objects.user_key import UserKey
-from src.domain.value_objects.user_session import UserSession
 
 
 class StateStore(ABC):

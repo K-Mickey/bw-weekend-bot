@@ -1,5 +1,5 @@
 - id: a
-  content:
+  posts:
     - id: c
       media:
         - type: text

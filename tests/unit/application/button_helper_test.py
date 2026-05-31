@@ -1,118 +1,102 @@
 import pytest
 
 from src.application.button_helper import add_automatic_buttons
-from src.domain.aggregates.post_node import PostNode
-from src.domain.entities.button_type import ButtonType
 from src.domain.entities.keyboard import KeyboardButton, KeyboardRow
-from src.domain.value_objects.buttons import Button
-from src.domain.value_objects.menu_node_flags import PostNodeFlags
-from src.domain.value_objects.nodes import NodeName
+from src.domain.value_objects.button import BaseButton, ButtonType
+from src.domain.value_objects.node import NodeName
 
 
 @pytest.fixture
-def post_node():
-    return PostNode(
-        id="test_menu",
-        media=[],
-        keyboard=[[dict(text="Settings", target="settings")]],
-        flags=PostNodeFlags(build=True, is_back=True, is_main=True),
-    )
+def simple_post(get_content):
+    return get_content("post_simple.yaml")
 
 
-def test_add_automatic_buttons_returns_post_node_unchanged(session):
-    post_node = PostNode(id="test_post", media=[])
-    result = add_automatic_buttons(post_node, session)
-    assert result is post_node
+def get_test_keyboard_row():
+    return KeyboardRow(buttons=[KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)])
 
 
-def test_add_automatic_buttons_returns_menu_node_unchanged_when_build_false(post_node, session):
-    post_node.flags.build = False
-    result = add_automatic_buttons(post_node, session)
-    assert result is post_node
+def get_back_button():
+    return KeyboardButton(text=BaseButton.BACK, target="other", type=ButtonType.BACK)
 
 
-def test_add_automatic_buttons_adds_back_button_when_conditions_met(post_node, session):
-    post_node.flags.is_main = False
+def get_main_menu_button():
+    return KeyboardButton(text=BaseButton.MAIN_MENU, target=NodeName.ROOT, type=ButtonType.MAIN_MENU)
+
+
+def test_add_automatic_buttons_returns_post_node_unchanged(session, post):
+    result = add_automatic_buttons(post, session)
+    assert result is post
+
+
+def test_add_automatic_buttons_returns_menu_node_unchanged_when_build_false(simple_post, session):
+    simple_post.flags.build = False
+    result = add_automatic_buttons(simple_post, session)
+    assert result is simple_post
+
+
+def test_add_automatic_buttons_adds_back_button_when_conditions_met(simple_post, session):
+    simple_post.flags.is_main = False
     session.push("other")
     session.push("settings")  # History: [ROOT, other, settings]
 
-    result = add_automatic_buttons(post_node, session)
+    result = add_automatic_buttons(simple_post, session)
 
     assert len(result.keyboard) == 2
-    assert result.keyboard[0] == KeyboardRow(
-        buttons=[KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
-    )
-    assert result.keyboard[1] == KeyboardRow(
-        buttons=[KeyboardButton(text=Button.BACK, target="other", type=ButtonType.BACK)]
-    )
+    assert result.keyboard[0] == get_test_keyboard_row()
+    assert result.keyboard[1] == KeyboardRow(buttons=[get_back_button()])
 
 
-def test_add_automatic_buttons_does_not_add_back_button_when_history_length_1(post_node, session):
-    post_node.flags.is_main = False
-    result = add_automatic_buttons(post_node, session)
+def test_add_automatic_buttons_does_not_add_back_button_when_history_length_1(simple_post, session):
+    simple_post.flags.is_main = False
+    result = add_automatic_buttons(simple_post, session)
 
     assert len(result.keyboard) == 1
-    assert result.keyboard[0] == KeyboardRow(
-        buttons=[KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
-    )
+    assert result.keyboard[0] == get_test_keyboard_row()
 
 
-def test_add_automatic_buttons_adds_main_menu_button_when_conditions_met(post_node, session):
-    post_node.flags.is_back = False
+def test_add_automatic_buttons_adds_main_menu_button_when_conditions_met(simple_post, session):
+    simple_post.flags.is_back = False
     session.push("settings")  # History: [ROOT, settings]
 
-    result = add_automatic_buttons(post_node, session)
+    result = add_automatic_buttons(simple_post, session)
 
     assert len(result.keyboard) == 2
-    assert result.keyboard[0] == KeyboardRow(
-        buttons=[KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
-    )
-    assert result.keyboard[1] == KeyboardRow(
-        buttons=[KeyboardButton(text=Button.MAIN_MENU, target=NodeName.ROOT, type=ButtonType.MAIN_MENU)]
-    )
+    assert result.keyboard[0] == get_test_keyboard_row()
+    assert result.keyboard[1] == KeyboardRow(buttons=[get_main_menu_button()])
 
 
-def test_add_automatic_buttons_does_not_add_main_menu_button_when_history_length_1(post_node, session):
-    post_node.flags.is_back = False
-    result = add_automatic_buttons(post_node, session)
+def test_add_automatic_buttons_does_not_add_main_menu_button_when_history_length_1(simple_post, session):
+    simple_post.flags.is_back = False
+    result = add_automatic_buttons(simple_post, session)
 
     assert len(result.keyboard) == 1
-    assert result.keyboard[0] == KeyboardRow(
-        buttons=[KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
-    )
+    assert result.keyboard[0] == get_test_keyboard_row()
 
 
-def test_add_automatic_buttons_adds_both_buttons_when_conditions_met(post_node, session):
+def test_add_automatic_buttons_adds_both_buttons_when_conditions_met(simple_post, session):
     session.push("other")
     session.push("settings")  # History: [ROOT, other, settings]
 
-    result = add_automatic_buttons(post_node, session)
+    result = add_automatic_buttons(simple_post, session)
 
     assert len(result.keyboard) == 2
-    assert result.keyboard[0] == KeyboardRow(
-        buttons=[KeyboardButton(text="Settings", target="settings", type=ButtonType.DEFAULT)]
-    )
-    assert result.keyboard[1] == KeyboardRow(
-        buttons=[
-            KeyboardButton(text=Button.MAIN_MENU, target=NodeName.ROOT, type=ButtonType.MAIN_MENU),
-            KeyboardButton(text=Button.BACK, target="other", type=ButtonType.BACK),
-        ]
-    )
+    assert result.keyboard[0] == get_test_keyboard_row()
+    assert result.keyboard[1] == KeyboardRow(buttons=[get_main_menu_button(), get_back_button()])
 
 
-def test_add_automatic_buttons_preserves_original_menu_node(post_node, session):
+def test_add_automatic_buttons_preserves_original_menu_node(simple_post, session):
     session.push("other")
     session.push("settings")  # History: [ROOT, other, settings]
 
-    original_id = post_node.id
-    original_media = post_node.media
-    original_flags = post_node.flags
+    original_id = simple_post.id
+    original_media = simple_post.media
+    original_flags = simple_post.flags
 
-    result = add_automatic_buttons(post_node, session)
+    result = add_automatic_buttons(simple_post, session)
 
-    assert post_node.id == original_id
-    assert post_node.media == original_media
-    assert post_node.flags == original_flags
+    assert simple_post.id == original_id
+    assert simple_post.media == original_media
+    assert simple_post.flags == original_flags
 
     assert result.id == original_id
     assert result.media == original_media

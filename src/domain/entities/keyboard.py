@@ -1,6 +1,8 @@
+from typing import Iterator
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from src.domain.entities.button_type import ButtonType
+from src.domain.value_objects.button import ButtonType
 
 
 class KeyboardButton(BaseModel):
@@ -19,8 +21,11 @@ class KeyboardButton(BaseModel):
 class KeyboardRow(BaseModel):
     buttons: list[KeyboardButton] = Field(...)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[KeyboardButton]:
         return iter(self.buttons)
+
+    def __getitem__(self, index) -> KeyboardButton:
+        return self.buttons[index]
 
 
 class Keyboard(BaseModel):
@@ -41,13 +46,13 @@ class Keyboard(BaseModel):
             raise ValueError("Duplicate buttons in keyboard")
         return self
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[KeyboardRow]:
         return iter(self.rows)
 
     def __len__(self):
         return len(self.rows)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> KeyboardRow:
         return self.rows[index]
 
     def add_row(self, row: KeyboardRow):

@@ -1,5 +1,5 @@
 id: menu_full
-content:
+posts:
   - id: post_text
     media:
       - type: text

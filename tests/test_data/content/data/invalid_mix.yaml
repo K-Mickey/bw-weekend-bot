@@ -1,5 +1,5 @@
 id: menu_bad
-content:
+posts:
   - id: post_bad
     media:
       - type: text

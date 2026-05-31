@@ -6,13 +6,10 @@ from vkbottle.bot import BotLabeler, Message
 from src.application.usecases.get_content import get_content_by_id
 from src.application.usecases.navigate import navigate
 from src.application.usecases.start_conversation import start_conversation
-from src.domain.aggregates import Content
-from src.domain.aggregates.menu_node import MenuNode
-from src.domain.entities.media.photo_node import PhotoNode
-from src.domain.entities.media.text_node import TextNode
-from src.domain.entities.media.video_node import VideoNode
+from src.domain.aggregates import Content, PostGroup
+from src.domain.entities.media import Photo, Video
 from src.domain.value_objects.network import Network
-from src.domain.value_objects.nodes import NodeName
+from src.domain.value_objects.node import NodeName
 
 labeler = BotLabeler()
 logger = logging.getLogger(__name__)
@@ -56,18 +53,18 @@ async def text_handler(message: Message) -> None:
 async def _send_content(message: Message, content: Content) -> None:
     logger.debug("Send content is called")
     keyboard = None
-    if isinstance(content, MenuNode):
+    if isinstance(content, PostGroup):
         keyboard = _create_keyboard(content)
         logger.debug(f"Created keyboard: {keyboard}")
 
-    posts = content.content if isinstance(content, MenuNode) else [content]
+    posts = content.posts if isinstance(content, PostGroup) else [content]
 
     for post in posts:
         for media in post.media:
-            if isinstance(media, TextNode):
+            if isinstance(media, Text):
                 logger.debug(f"Sending text: {media.text}")
                 await message.answer(media.text, keyboard=keyboard)
-            elif isinstance(media, PhotoNode):
+            elif isinstance(media, Photo):
                 logger.debug(f"Sending photo: {media.url}")
                 # photo uploader?
                 await message.answer(
@@ -75,7 +72,7 @@ async def _send_content(message: Message, content: Content) -> None:
                     message=media.description or "",
                     keyboard=keyboard,
                 )
-            elif isinstance(media, VideoNode):
+            elif isinstance(media, Video):
                 logger.debug(f"Sending video: {media.url}")
                 # video uploader??
                 await message.answer(
@@ -87,7 +84,7 @@ async def _send_content(message: Message, content: Content) -> None:
                 raise ValueError(f"Unsupported media type: {type(media)}")
 
 
-def _create_keyboard(content: MenuNode) -> Keyboard:
+def _create_keyboard(content: PostGroup) -> Keyboard:
     keyboard = Keyboard(inline=False)
     for row in content.keyboard:
         for button in row:

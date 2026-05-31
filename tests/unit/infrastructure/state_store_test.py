@@ -1,8 +1,8 @@
 import pytest
 
+from src.domain.entities.user_session import UserSession
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.user_key import UserKey
-from src.domain.value_objects.user_session import UserSession
 from src.infrastructure.state_store.base import StateStore
 from src.infrastructure.state_store.memory_store import InMemoryStateStore
 

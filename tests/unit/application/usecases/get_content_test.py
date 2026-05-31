@@ -3,7 +3,6 @@ from unittest.mock import Mock, patch
 import pytest
 
 from src.application.usecases.get_content import get_content_by_id, get_current_content
-from src.domain.aggregates.post_node import PostNode
 
 PREFIX = "src.application.usecases.get_content"
 
@@ -29,21 +28,20 @@ def state_store(session):
 
 def test_get_content_returns_content_response(
     session,
+    post,
     mock_get_node,
     mock_add_automatic_buttons,
     state_store,
 ):
-    node_id = "test_node"
-    mock_node = PostNode(id=node_id, media=[])
-    session.push(node_id)
-    mock_get_node.return_value = mock_node
+    session.push(post.id)
+    mock_get_node.return_value = post
 
     result = get_current_content(session.user_key)
 
-    mock_get_node.assert_called_once_with(node_id)
-    assert result == mock_node
+    mock_get_node.assert_called_once_with(post.id)
+    assert result == post
 
-    mock_add_automatic_buttons.assert_called_once_with(mock_node, session)
+    mock_add_automatic_buttons.assert_called_once_with(post, session)
 
 
 def test_get_content_raises_error_when_node_not_found(
@@ -65,12 +63,8 @@ def test_get_content_raises_error_when_node_not_found(
     mock_add_automatic_buttons.assert_not_called()
 
 
-def test_get_content_by_id(mock_get_node):
-    node_id = "test_node"
-    mock_node = PostNode(id=node_id, media=[])
-    mock_get_node.return_value = mock_node
-
-    result = get_content_by_id(node_id)
-
-    mock_get_node.assert_called_once_with(node_id)
-    assert result == mock_node
+def test_get_content_by_id(mock_get_node, post):
+    mock_get_node.return_value = post
+    result = get_content_by_id(post.id)
+    mock_get_node.assert_called_once_with(post.id)
+    assert result == post

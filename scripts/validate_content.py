@@ -18,7 +18,7 @@ from pathlib import Path
 from pydantic import ValidationError
 from ruamel.yaml import YAML
 
-from src.domain import node_factory
+from src.domain.factories import content_factory
 
 log = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ def check_target_exists(nodes: tuple[dict, ...]) -> int:
     valid_ids = {n.get("id") for n in nodes if n.get("id")}
     errors = 0
     for node in nodes:
-        for post in node.get("content", []):
+        for post in node.get("posts", []):
             for row in post.get("keyboard", []):
                 for btn in row:
                     target = btn.get("target")
@@ -109,7 +109,7 @@ def check_domain_objects(nodes: tuple[dict, ...]) -> int:
     errors = 0
     for raw in nodes:
         try:
-            node_factory(raw)
+            content_factory(raw)
         except ValidationError as exc:
             log.error(
                 "Domain validation failed for node `%s`: %s",

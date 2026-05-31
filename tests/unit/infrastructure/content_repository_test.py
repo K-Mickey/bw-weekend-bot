@@ -1,9 +1,9 @@
 import pytest
 
-from src.domain.aggregates import MenuNode, PostNode
+from src.domain.aggregates import Post, PostGroup
 from src.domain.entities.keyboard import Keyboard, KeyboardButton, KeyboardRow
-from src.domain.entities.media.text_node import TextNode
-from src.domain.value_objects.menu_node_flags import PostNodeFlags
+from src.domain.entities.media import Text
+from src.domain.value_objects.post_flag import PostFlag
 from src.infrastructure.content_repository import ContentRepository
 
 
@@ -21,7 +21,7 @@ def patch_dir(data_dir):
 
 def test_content_repository_get_existing_node(patch_dir):
     node = ContentRepository.get_node("menu_ok")
-    assert isinstance(node, MenuNode)
+    assert isinstance(node, PostGroup)
 
 
 def test_content_repository_get_nonexistent_node(patch_dir):
@@ -32,12 +32,11 @@ def test_content_repository_get_nonexistent_node(patch_dir):
 def test_content_repository_context(patch_dir):
     node = ContentRepository.get_node("menu_ok")
 
-    content = node.content[0]
-    assert isinstance(content, PostNode)
+    content = node.posts[0]
+    assert isinstance(content, Post)
 
-    media = content.media[0]
-    assert isinstance(media, TextNode)
-    assert media.text == "Hello world"
+    assert isinstance(content.media, Text)
+    assert content.media.text == "Hello world"
 
     assert content.keyboard == Keyboard(
         rows=[
@@ -46,7 +45,7 @@ def test_content_repository_context(patch_dir):
         ]
     )
 
-    assert content.flags == PostNodeFlags(
+    assert content.flags == PostFlag(
         is_back=False,
         is_main=True,
         build=True,

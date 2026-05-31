@@ -1,0 +1,11 @@
+id: post
+media:
+  - type: text
+    text: Hello world
+keyboard:
+  - - text: "Settings"
+      target: settings
+flags:
+  is_back: true
+  is_main: true
+  build: true

@@ -1,10 +1,9 @@
 from src.application.usecases.get_content import get_current_content
-from src.domain.aggregates import Content
-from src.domain.aggregates.menu_node import MenuNode
-from src.domain.entities.button_type import ButtonType
+from src.domain.aggregates import Content, PostGroup
 from src.domain.entities.keyboard import KeyboardButton
+from src.domain.value_objects.button import ButtonType
 from src.domain.value_objects.network import Network
-from src.domain.value_objects.nodes import NodeName
+from src.domain.value_objects.node import NodeName
 from src.domain.value_objects.user_key import UserKey
 from src.infrastructure.state_store import state_store
 
@@ -36,7 +35,7 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
 
 
 def _find_button(node: Content, target_label: str) -> KeyboardButton | None:
-    content = node.content if isinstance(node, MenuNode) else [node]
+    content = node.posts if isinstance(node, PostGroup) else [node]
     for post in content:
         for row in post.keyboard:
             for button in row:

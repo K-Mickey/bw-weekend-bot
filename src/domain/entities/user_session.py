@@ -1,10 +1,10 @@
-from .user_key import UserKey
+from src.domain.value_objects.user_key import UserKey
 
 
 class UserSession:
     def __init__(self, user_key: UserKey, root_node_id: str):
         self.user_key = user_key
-        self.history: list[str] = [root_node_id]
+        self.history = [root_node_id]
 
     @property
     def current(self) -> str:
