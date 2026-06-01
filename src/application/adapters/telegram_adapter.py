@@ -16,7 +16,7 @@ from src.domain.entities import MediaGroup
 from src.domain.entities.keyboard import Keyboard
 from src.domain.entities.media import MediaType, Photo, Text, Video
 from src.domain.value_objects.network import Network
-from src.infrastructure.file_cache import get_cache
+from src.infrastructure.file_cache import MediaCache
 from src.infrastructure.file_cache.exceptions import MediaCacheError
 from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
 from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
@@ -26,8 +26,9 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramAdapter(BaseAdapter):
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: Bot, cache: MediaCache):
         self.bot = bot
+        self.cache = cache
 
     async def send_text(self, recipient_id: int | str, text: Text, reply_markup: Keyboard) -> None:
         try:
@@ -60,9 +61,8 @@ class TelegramAdapter(BaseAdapter):
             logger.debug(f"Failed to send photo {photo.url}: {e}")
             # Очистка кеша и повторная попытка
             try:
-                cache = await get_cache()
                 cache_key = CacheKey.create(photo, Network.TELEGRAM)
-                await cache.remove(cache_key)
+                await self.cache.remove(cache_key)
             except Exception as cache_e:
                 logger.error(f"Failed to clear cache for photo {photo.url}: {cache_e}")
 
@@ -85,7 +85,7 @@ class TelegramAdapter(BaseAdapter):
             logger.error(f"Error sending photo {photo.url} to {recipient_id}: {e}")
             raise
 
-    async def send_video(self, recipient_id: str, video: Video, reply_markup: Keyboard) -> None:
+    async def send_video(self, recipient_id: int | str, video: Video, reply_markup: Keyboard) -> None:
         """Отправляет видео через Telegram с кэшированием."""
         try:
             keyboard_markup = self._create_keyboard(reply_markup)
@@ -107,9 +107,8 @@ class TelegramAdapter(BaseAdapter):
             logger.debug(f"Failed to send video {video.url}: {e}")
             # Очистка кеша и повторная попытка
             try:
-                cache = await get_cache()
                 cache_key = CacheKey.create(video, Network.TELEGRAM)
-                await cache.remove(cache_key)
+                await self.cache.remove(cache_key)
             except Exception as cache_e:
                 logger.error(f"Failed to clear cache for video {video.url}: {cache_e}")
 
@@ -144,9 +143,8 @@ class TelegramAdapter(BaseAdapter):
                 # Очистка кеша и повторная попытка
                 for node in media_group:
                     try:
-                        cache = await get_cache()
                         cache_key = CacheKey.create(node, Network.TELEGRAM)
-                        await cache.remove(cache_key)
+                        await self.cache.remove(cache_key)
                     except Exception as cache_e:
                         logger.error(f"Failed to clear cache for {node.__class__.__name__}: {cache_e}")
 
@@ -160,23 +158,18 @@ class TelegramAdapter(BaseAdapter):
             raise
 
     @staticmethod
-    def _create_keyboard(content: Keyboard) -> ReplyKeyboardMarkup:
+    def _create_keyboard(keyboard: Keyboard) -> ReplyKeyboardMarkup:
         rows = []
-        for row in content:
+        for row in keyboard:
             buttons = [KeyboardButton(text=btn.text) for btn in row]
             rows.append(buttons)
         return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
 
-    @staticmethod
-    async def _get_media_source(media: MediaType, from_cache: bool = True) -> tuple[str | FSInputFile, bool]:
-        """
-        :return: (album_builder, is_from_cache) where is_from_cache indicates if any media was taken from cache
-        """
-        cache = await get_cache()
+    async def _get_media_source(self, media: MediaType, from_cache: bool = True) -> tuple[str | FSInputFile, bool]:
         cache_key = CacheKey.create(media, Network.TELEGRAM)
         if from_cache:
             try:
-                cache_record = await cache.get(cache_key)
+                cache_record = await self.cache.get(cache_key)
                 return cache_record.file_id, True
             except MediaCacheError as e:
                 logger.debug(e)
@@ -195,7 +188,8 @@ class TelegramAdapter(BaseAdapter):
         album = MediaGroupBuilder()
         is_from_cache = False
         for node in media:
-            media_source, is_from_cache = self._get_media_source(node, from_cache)
+            media_source, current_from_cache = await self._get_media_source(node, from_cache)
+            is_from_cache = is_from_cache or current_from_cache
 
             match node:
                 case Photo():
@@ -219,12 +213,11 @@ class TelegramAdapter(BaseAdapter):
         except Exception as e:
             logger.error(f"Failed to update cache for media: {e}")
 
-    @staticmethod
     async def _update_cache_from_messages(
+        self,
         media: Iterable[MediaType],
         messages: Iterable[Message],
     ) -> None:
-        cache = await get_cache()
 
         for message, node in zip(messages, media):
             cache_key = CacheKey.create(node, Network.TELEGRAM)
@@ -235,6 +228,7 @@ class TelegramAdapter(BaseAdapter):
                 new_file_id = message.video.file_id
             else:
                 logger.warning(f"No media found in message: {message}")
+                continue
 
             record = CacheRecord.from_file(file_id=new_file_id, file_path=get_file_path(node))
-            await cache.add(cache_key, record)
+            await self.cache.add(cache_key, record)
