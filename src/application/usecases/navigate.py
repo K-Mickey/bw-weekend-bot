@@ -8,6 +8,16 @@ from src.domain.value_objects.user_key import UserKey
 from src.infrastructure.state_store import state_store
 
 
+class NavigateException(Exception):
+    pass
+
+
+class ButtonNotFoundException(NavigateException):
+    def __init__(self, button_label: str, *args):
+        message = f"Button '{button_label}' bot found"
+        super().__init__(message, *args)
+
+
 def navigate(network: Network, external_user_id: int | str, button_label: str) -> Content:
     """
     Navigate from the current node to the next node based on the button label.
@@ -19,7 +29,7 @@ def navigate(network: Network, external_user_id: int | str, button_label: str) -
 
     button = _find_button(current_node, button_label)
     if not button:
-        raise ValueError("Button not found")
+        raise ButtonNotFoundException(button_label=button_label)
 
     match button.type:
         case ButtonType.MAIN_MENU:

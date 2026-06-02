@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.application.usecases.navigate import navigate
+from src.application.usecases.navigate import ButtonNotFoundException, navigate
 
 
 @pytest.fixture
@@ -105,8 +105,7 @@ def test_navigate_invalid_button(
     mock_store.get_session.return_value = session
     mock_get_content.return_value = post_group
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ButtonNotFoundException):
         navigate(user_key.network, user_key.external_id, button_label)
 
-    assert "Button not found" in str(exc_info.value)
     mock_store.push_node.assert_not_called()

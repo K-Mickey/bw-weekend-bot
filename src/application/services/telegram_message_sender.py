@@ -11,7 +11,7 @@ from aiogram.types import (
 )
 from aiogram.utils.media_group import MediaGroupBuilder
 
-from src.application.adapters.base import BaseAdapter
+from src.application.services import MessageSender
 from src.domain.entities import MediaGroup
 from src.domain.entities.keyboard import Keyboard
 from src.domain.entities.media import MediaType, Photo, Text, Video
@@ -25,19 +25,19 @@ from src.infrastructure.file_provider import get_file_path
 logger = logging.getLogger(__name__)
 
 
-class TelegramAdapter(BaseAdapter):
+class TelegramMessageSender(MessageSender):
     def __init__(self, bot: Bot, cache: MediaCache):
         self.bot = bot
         self.cache = cache
 
-    async def send_text(self, recipient_id: int | str, text: Text, reply_markup: Keyboard) -> None:
+    async def send_text(self, user_id: int | str, text: Text, reply_markup: Keyboard) -> None:
         try:
             keyboard_markup = self._create_keyboard(reply_markup)
-            await self.bot.send_message(chat_id=recipient_id, text=text.text, reply_markup=keyboard_markup)
+            await self.bot.send_message(chat_id=user_id, text=text.text, reply_markup=keyboard_markup)
         except TelegramForbiddenError:
-            logger.warning(f"User {recipient_id} blocked the bot.")
+            logger.warning(f"User {user_id} blocked the bot.")
         except Exception as e:
-            logger.error(f"Error sending text to {recipient_id}: {e}")
+            logger.error(f"Error sending text to {user_id}: {e}")
             raise
 
     async def send_photo(self, recipient_id: int | str, photo: Photo, reply_markup: Keyboard) -> None:
@@ -114,7 +114,7 @@ class TelegramAdapter(BaseAdapter):
 
             # Повторная отправка уже гарантированно из файла
             try:
-                keyboard_markup = self._create_keyboard(reply_markup) if reply_markup else None
+                keyboard_markup = self._create_keyboard(reply_markup)
                 media_source, _ = await self._get_media_source(video, from_cache=False)
 
                 sent_message = await self.bot.send_video(
