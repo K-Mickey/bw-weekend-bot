@@ -27,8 +27,8 @@ def get_telegram_bot() -> Bot:
 
 async def get_telegram_dp(bot) -> Dispatcher:
     cache = await get_cache()
-    adapter = TelegramMessageSender(bot=bot, cache=cache)
-    dp = Dispatcher(adapter=adapter)
+    message_sender = TelegramMessageSender(bot=bot, cache=cache)
+    dp = Dispatcher(message_sender=message_sender)
     dp.include_router(router)
     return dp
 
