@@ -30,24 +30,22 @@ async def cmd_start(message: Message, message_sender: MessageSender) -> None:
 
     try:
         content = start_conversation(Network.TELEGRAM, user_id)
-        await message_sender.send_content(user_id, content)
+        await message_sender.send_content(message, content)
 
     except Exception:
-        await message_sender.send_error_message(user_id)
+        await message_sender.send_error_message(message)
         raise
 
 
 @router.message(Command("help"))
 async def cmd_help(message: Message, message_sender: MessageSender) -> None:
     logger.debug("Help handler is called")
-    user_id = message.from_user.id
-
     try:
         content = get_content_by_id(NodeName.HELP)
-        await message_sender.send_content(user_id, content)
+        await message_sender.send_content(message, content)
 
     except Exception:
-        await message_sender.send_error_message(user_id)
+        await message_sender.send_error_message(message)
         raise
 
 
@@ -62,8 +60,8 @@ async def handle_text_message(message: Message, message_sender: MessageSender) -
     try:
         content = navigate(Network.TELEGRAM, user_id, text)
         logger.debug(f"Navigated to {content.id}")
-        await message_sender.send_content(user_id, content)
+        await message_sender.send_content(message, content)
 
     except Exception:
-        await message_sender.send_error_message(user_id)
+        await message_sender.send_error_message(message)
         raise

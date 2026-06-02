@@ -9,38 +9,38 @@ from src.domain.value_objects.node import NodeName
 
 
 class MessageSender(ABC):
-    async def send_content(self, recipient_id: int | str, content: Content) -> None:
+    async def send_content(self, message, content: Content) -> None:
         posts = content.posts if isinstance(content, PostGroup) else [content]
         for post in posts:
             media = post.media
             match media:
                 case MediaGroup():
-                    await self.send_media_group(recipient_id, post.media)
+                    await self.send_media_group(message, post.media)
                 case Text():
-                    await self.send_text(recipient_id, post.media, post.keyboard)
+                    await self.send_text(message, post.media, post.keyboard)
                 case Photo():
-                    await self.send_photo(recipient_id, post.media, post.keyboard)
+                    await self.send_photo(message, post.media, post.keyboard)
                 case Video():
-                    await self.send_video(recipient_id, post.media, post.keyboard)
+                    await self.send_video(message, post.media, post.keyboard)
                 case _:
                     raise ValueError(f"Unsupported media type: {media}")
 
-    async def send_error_message(self, recipient_id: int | str) -> None:
+    async def send_error_message(self, message) -> None:
         content = get_content_by_id(NodeName.ERROR)
-        await self.send_content(recipient_id, content)
+        await self.send_content(message, content)
 
     @abstractmethod
-    async def send_text(self, recipient_id: int | str, text: Text, reply_markup: Keyboard) -> None:
+    async def send_text(self, message, text: Text, reply_markup: Keyboard) -> None:
         pass
 
     @abstractmethod
-    async def send_photo(self, recipient_id: int | str, photo: Photo, reply_markup: Keyboard) -> None:
+    async def send_photo(self, message, photo: Photo, reply_markup: Keyboard) -> None:
         pass
 
     @abstractmethod
-    async def send_video(self, recipient_id: int | str, video: Video, reply_markup: Keyboard) -> None:
+    async def send_video(self, message, video: Video, reply_markup: Keyboard) -> None:
         pass
 
     @abstractmethod
-    async def send_media_group(self, recipient_id: int | str, media_group: MediaGroup) -> None:
+    async def send_media_group(self, message, media_group: MediaGroup) -> None:
         pass
