@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 
+from src.application.usecases.get_content import get_content_by_id
 from src.domain.aggregates import Content, PostGroup
 from src.domain.entities import MediaGroup
 from src.domain.entities.keyboard import Keyboard
 from src.domain.entities.media import Photo, Text, Video
+from src.domain.value_objects.node import NodeName
 
 
 class MessageSender(ABC):
@@ -22,6 +24,10 @@ class MessageSender(ABC):
                     await self.send_video(recipient_id, post.media, post.keyboard)
                 case _:
                     raise ValueError(f"Unsupported media type: {media}")
+
+    async def send_error_message(self, recipient_id: int | str) -> None:
+        content = get_content_by_id(NodeName.ERROR)
+        await self.send_content(recipient_id, content)
 
     @abstractmethod
     async def send_text(self, recipient_id: int | str, text: Text, reply_markup: Keyboard) -> None:

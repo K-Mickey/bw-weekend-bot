@@ -1,11 +1,6 @@
 import logging
 
-from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
-from aiogram.types import (
-    ErrorEvent,
-    Message,
-)
+from vkbottle.bot import BotLabeler, Message
 
 from src.application.services import MessageSender
 from src.application.usecases.get_content import get_content_by_id
@@ -14,19 +9,15 @@ from src.application.usecases.start_conversation import start_conversation
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.node import NodeName
 
-router = Router()
+labeler = BotLabeler()
+
 logger = logging.getLogger(__name__)
 
 
-@router.errors()
-async def handle_errors(event: ErrorEvent) -> None:
-    logger.error(f"Error: {event.exception}")
-
-
-@router.message(CommandStart())
+@labeler.message(text="/start")
 async def cmd_start(message: Message, message_sender: MessageSender) -> None:
     logger.debug("Start handler is called")
-    user_id = message.from_user.id
+    user_id = message.from_id
 
     try:
         content = start_conversation(Network.TELEGRAM, user_id)
@@ -37,10 +28,10 @@ async def cmd_start(message: Message, message_sender: MessageSender) -> None:
         raise
 
 
-@router.message(Command("help"))
+@labeler.message(text="/help")
 async def cmd_help(message: Message, message_sender: MessageSender) -> None:
     logger.debug("Help handler is called")
-    user_id = message.from_user.id
+    user_id = message.from_id
 
     try:
         content = get_content_by_id(NodeName.HELP)
@@ -51,10 +42,10 @@ async def cmd_help(message: Message, message_sender: MessageSender) -> None:
         raise
 
 
-@router.message(F.text)
-async def handle_text_message(message: Message, message_sender: MessageSender) -> None:
+@labeler.message()
+async def text_handler(message: Message, message_sender: MessageSender) -> None:
     logger.debug("Text handler is called")
-    user_id = message.from_user.id
+    user_id = message.from_id
     text = message.text.strip()
     if not text:
         return

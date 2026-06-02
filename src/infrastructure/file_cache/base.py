@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime, timedelta
-from typing import Self, Sequence
+from typing import Iterable, Self
 
 from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
 from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
@@ -25,7 +25,7 @@ class MediaCache(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def get_many(self, cache_keys: Sequence[CacheKey]) -> dict[CacheKey, CacheRecord]:
+    async def get_many(self, cache_keys: Iterable[CacheKey]) -> dict[CacheKey, CacheRecord]:
         raise NotImplementedError
 
     @abc.abstractmethod

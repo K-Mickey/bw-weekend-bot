@@ -30,14 +30,14 @@ class TelegramMessageSender(MessageSender):
         self.bot = bot
         self.cache = cache
 
-    async def send_text(self, user_id: int | str, text: Text, reply_markup: Keyboard) -> None:
+    async def send_text(self, recipient_id: int | str, text: Text, reply_markup: Keyboard) -> None:
         try:
             keyboard_markup = self._create_keyboard(reply_markup)
-            await self.bot.send_message(chat_id=user_id, text=text.text, reply_markup=keyboard_markup)
+            await self.bot.send_message(chat_id=recipient_id, text=text.text, reply_markup=keyboard_markup)
         except TelegramForbiddenError:
-            logger.warning(f"User {user_id} blocked the bot.")
+            logger.warning(f"User {recipient_id} blocked the bot.")
         except Exception as e:
-            logger.error(f"Error sending text to {user_id}: {e}")
+            logger.error(f"Error sending text to {recipient_id}: {e}")
             raise
 
     async def send_photo(self, recipient_id: int | str, photo: Photo, reply_markup: Keyboard) -> None:

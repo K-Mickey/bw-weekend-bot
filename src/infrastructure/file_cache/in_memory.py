@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import Self, Sequence
+from typing import Iterable, Self
 
 from src.infrastructure.file_cache.base import (
     CacheRecord,
@@ -30,7 +30,7 @@ class InMemoryMediaCache(MediaCache):
         async with self._store_lock:
             return self._get_unsafe(cache_key)
 
-    async def get_many(self, cache_keys: Sequence[CacheKey]) -> dict[CacheKey, CacheRecord]:
+    async def get_many(self, cache_keys: Iterable[CacheKey]) -> dict[CacheKey, CacheRecord]:
         async with self._store_lock:
             return {key: self._get_unsafe(key) for key in cache_keys}
 
