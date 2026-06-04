@@ -5,6 +5,9 @@ class Photo(BaseModel):
     local_path: str = Field(...)
     description: str | None = None
 
+    def __hash__(self):
+        return hash((self.local_path, self.description))
+
     def __repr__(self):
         return f"PhotoNode({self.local_path}, {self.description})"
 

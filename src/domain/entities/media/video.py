@@ -1,3 +1,5 @@
+import re
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -26,3 +28,12 @@ class Video(BaseModel):
         if not any(v.startswith(url) for url in correct_urls):
             raise ValueError(f"vk_url must start with one of {correct_urls}")
         return v
+
+    @property
+    def vk_video_id(self) -> str:
+        pattern = r"(?:video|clip)(-?\d+)_(\d+)"
+        match = re.search(pattern, self.vk_url)
+        if match:
+            return match.group(0)
+        else:
+            raise ValueError("Не удалось извлечь ID видео из ссылки")

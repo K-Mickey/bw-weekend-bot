@@ -1,7 +1,9 @@
+import asyncio
 import logging
+from json import JSONDecodeError
 from pathlib import Path
 
-from vkbottle import Bot, PhotoMessageUploader, VideoUploader, VKAPIError
+from vkbottle import Bot, PhotoMessageUploader, VKAPIError
 from vkbottle import Keyboard as VKKeyboard
 from vkbottle import Text as VKText
 from vkbottle.bot import Message
@@ -25,7 +27,6 @@ class VKMessageSender(MessageSender):
         self.bot = bot
         self.cache = cache
         self.photo_uploader = PhotoMessageUploader(bot.api)
-        self.video_uploader = VideoUploader(bot.api)
 
     async def send_text(self, message: Message, text: Text, reply_markup: Keyboard) -> None:
         keyboard_markup = self._create_keyboard(reply_markup)
@@ -44,17 +45,10 @@ class VKMessageSender(MessageSender):
 
         except (VKAPIError, MediaCacheError) as e:
             logger.debug(f"Failed to send photo {photo.local_path}: {e}")
-            await self.cache.remove(cache_key)
-
-            file_path = str(get_file_path(photo))
-            attachment = await self.photo_uploader.upload(
-                file_source=file_path,
-                peer_id=message.peer_id,
-            )
-            await self._safe_update_cache(
+            attachment = await self._update_photo_from_local(
+                photo=photo,
                 cache_key=cache_key,
-                attachment=attachment,
-                file_path=file_path,
+                peer_id=message.peer_id,
             )
 
             await message.answer(
@@ -64,77 +58,87 @@ class VKMessageSender(MessageSender):
             )
 
     async def send_video(self, message: Message, video: Video, reply_markup: Keyboard) -> None:
-        cache_key = CacheKey.create(video, Network.VK)
         keyboard_markup = self._create_keyboard(reply_markup)
-        try:
-            cache_record = await self.cache.get(cache_key)
-            await message.answer(
-                attachment=cache_record.file_id,
-                message=video.description,
-                keyboard=keyboard_markup,
-            )
-
-        except (VKAPIError, MediaCacheError) as e:
-            logger.debug(f"Failed to send video {video.local_path}: {e}")
-            await self.cache.remove(cache_key)
-
-            logger.warning(f"Video {video.local_path} is not supported")
-            # file_path = str(get_file_path(video))
-            # attachment = await self.video_uploader.upload(
-            #     file_source=file_path,
-            #     description=video.description,
-            # )
-            # await self._safe_update_cache(
-            #     cache_key=cache_key,
-            #     attachment=attachment,
-            #     file_path=file_path,
-            # )
-            #
-            # await message.answer(
-            #     attachment=attachment,
-            #     message=video.description,
-            #     keyboard=keyboard_markup,
-            # )
+        await message.answer(
+            attachment=video.vk_video_id,
+            message=video.description,
+            keyboard=keyboard_markup,
+        )
 
     async def send_media_group(self, message: Message, media_group: MediaGroup) -> None:
-        cache_keys = tuple(CacheKey.create(node, Network.VK) for node in media_group)
+        photos = filter(lambda x: isinstance(x, Photo), media_group)
+        cache_keys = {photo: CacheKey.create(photo, Network.VK) for photo in photos}
         try:
             cache_records = await self.cache.get_many(cache_keys)
-            attachment = ",".join(record.file_id for record in cache_records.values())
+            attachments = []
+            for media in media_group:
+                match media:
+                    case Photo():
+                        key = cache_keys[media]
+                        record = cache_records[key]
+                        attachments.append(record.file_id)
+                    case Video():
+                        attachments.append(media.vk_video_id)
+
+            attachment = ",".join(attachments)
             await message.answer(attachment=attachment)
 
         except (VKAPIError, MediaCacheError) as e:
             logger.debug(f"Failed to send media group: {e}")
-            for cache_key in cache_keys:
-                await self.cache.remove(cache_key)
 
             logger.debug("Uploading media group...")
             attachments = []
-            for media, cache_key in zip(media_group, cache_keys):
-                file_path = str(get_file_path(media))
-
+            for media in media_group:
                 match media:
                     case Photo():
-                        attachment = await self.photo_uploader.upload(
-                            file_source=file_path,
+                        cache_key = cache_keys.get(media)
+                        attachment = await self._update_photo_from_local(
+                            photo=media,
+                            cache_key=cache_key,
                             peer_id=message.peer_id,
                         )
-                        logger.debug(f"Photo {media.local_path} uploaded")
-                        await self._safe_update_cache(
-                            cache_key=cache_key,
-                            attachment=attachment,
-                            file_path=file_path,
-                        )
-                        attachments.append(attachment)
 
                     case Video():
-                        logger.warning(f"Video {media.local_path} is not supported")
+                        attachment = media.vk_video_id
+                        logger.debug(f"Video id extracted: {attachment}")
+
                     case _:
-                        raise ValueError(f"Unsupported media type: {media}")
+                        raise ValueError(f"Unsupported media type: {type(media)}")
+
+                attachments.append(attachment)
 
             attachment = ",".join(attachments)
             logger.debug(f"Media group {attachment} uploaded")
             await message.answer(attachment=attachment)
+
+    async def _update_photo_from_local(self, photo: Photo, cache_key: CacheKey, peer_id: int) -> str:
+        await self.cache.remove(cache_key)
+
+        file_path = str(get_file_path(photo))
+        retries = 3
+        for retry in range(retries):
+            try:
+                attachment = await self.photo_uploader.upload(
+                    file_source=file_path,
+                    peer_id=peer_id,
+                )
+                break
+            except JSONDecodeError:
+                logger.debug(f"Unexpected JSON response from VK API; retry {retry + 1} of {retries}")
+                if retry == retries - 1:
+                    raise
+
+                await asyncio.sleep(1)
+
+        logger.debug(f"Photo {photo.local_path} uploaded")
+        logger.debug(f"Attachment: {attachment}")
+        await self._safe_update_cache(
+            cache_key=cache_key,
+            attachment=attachment,
+            file_path=file_path,
+        )
+
+        return attachment
 
     @staticmethod
     def _create_keyboard(keyboard: Keyboard) -> VKKeyboard:
