@@ -21,7 +21,7 @@ def get_file_path(media: MediaItem) -> Path:
         case _:
             raise FileProviderError(f"Unsupported media type: {media}")
 
-    file_path = folder / media.url
+    file_path = folder / media.local_path
     if not file_path.is_file():
         raise FileNotFound(f"File not found: {file_path}")
 

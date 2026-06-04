@@ -16,8 +16,8 @@ posts:
   - id: post_media
     media:
       - type: photo
-        url: some_photo.jpg
+        local_path: some_photo.jpg
         description: "real photo"
       - type: video
-        url: some_video.mp4
+        local_path: some_video.mp4
         description: "real video"

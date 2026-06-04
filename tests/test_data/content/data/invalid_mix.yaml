@@ -5,4 +5,4 @@ posts:
       - type: text
         text: Hello
       - type: photo
-        url: http://example.com/img.png
+        local_path: http://example.com/img.png

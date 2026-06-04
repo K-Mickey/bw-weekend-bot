@@ -26,5 +26,5 @@ class CacheKey(NamedTuple):
         return cls(
             media_type=media_type,
             network=network,
-            key=media.url,
+            key=media.local_path,
         )

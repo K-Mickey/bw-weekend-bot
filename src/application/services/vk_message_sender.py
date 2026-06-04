@@ -43,7 +43,7 @@ class VKMessageSender(MessageSender):
             )
 
         except (VKAPIError, MediaCacheError) as e:
-            logger.debug(f"Failed to send photo {photo.url}: {e}")
+            logger.debug(f"Failed to send photo {photo.local_path}: {e}")
             await self.cache.remove(cache_key)
 
             file_path = str(get_file_path(photo))
@@ -75,10 +75,10 @@ class VKMessageSender(MessageSender):
             )
 
         except (VKAPIError, MediaCacheError) as e:
-            logger.debug(f"Failed to send video {video.url}: {e}")
+            logger.debug(f"Failed to send video {video.local_path}: {e}")
             await self.cache.remove(cache_key)
 
-            logger.warning(f"Video {video.url} is not supported")
+            logger.warning(f"Video {video.local_path} is not supported")
             # file_path = str(get_file_path(video))
             # attachment = await self.video_uploader.upload(
             #     file_source=file_path,
@@ -119,7 +119,7 @@ class VKMessageSender(MessageSender):
                             file_source=file_path,
                             peer_id=message.peer_id,
                         )
-                        logger.debug(f"Photo {media.url} uploaded")
+                        logger.debug(f"Photo {media.local_path} uploaded")
                         await self._safe_update_cache(
                             cache_key=cache_key,
                             attachment=attachment,
@@ -128,7 +128,7 @@ class VKMessageSender(MessageSender):
                         attachments.append(attachment)
 
                     case Video():
-                        logger.warning(f"Video {media.url} is not supported")
+                        logger.warning(f"Video {media.local_path} is not supported")
                     case _:
                         raise ValueError(f"Unsupported media type: {media}")
 

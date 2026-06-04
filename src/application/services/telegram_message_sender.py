@@ -51,7 +51,7 @@ class TelegramMessageSender(MessageSender):
             logger.warning(f"User {message.from_user.id} blocked the bot.")
 
         except (TelegramBadRequest, MediaCacheError) as e:
-            logger.debug(f"Failed to send photo {photo.url}: {e}")
+            logger.debug(f"Failed to send photo {photo.local_path}: {e}")
             await self.cache.remove(cache_key)
 
             file_path = get_file_path(photo)
@@ -82,7 +82,7 @@ class TelegramMessageSender(MessageSender):
             logger.warning(f"User {message.from_user.id} blocked the bot.")
 
         except (TelegramBadRequest, MediaCacheError) as e:
-            logger.debug(f"Failed to send video {video.url}: {e}")
+            logger.debug(f"Failed to send video {video.local_path}: {e}")
             await self.cache.remove(cache_key)
 
             file_path = get_file_path(video)

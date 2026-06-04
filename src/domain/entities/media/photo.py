@@ -2,11 +2,11 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class Photo(BaseModel):
-    url: str = Field(...)
+    local_path: str = Field(...)
     description: str | None = None
 
     def __repr__(self):
-        return f"PhotoNode({self.url}, {self.description})"
+        return f"PhotoNode({self.local_path}, {self.description})"
 
     @field_validator("description")
     @classmethod
