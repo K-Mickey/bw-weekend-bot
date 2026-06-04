@@ -59,7 +59,7 @@ def connect_vk_webhook(app: web.Application):
         title=settings.vk.webhook_title,
         secret_key=settings.vk.webhook_secret,
     )
-    vk_bot = asyncio.run(get_vk_bot(callback))
+    vk_bot = get_vk_bot(callback)
 
     async def vk_webhook(request: web.Request):
         try:

@@ -1,6 +1,7 @@
 import logging
 
 from vkbottle.bot import BotLabeler, Message
+from vkbottle.dispatch.rules.base import CommandRule
 
 from src.application.services import MessageSender
 from src.application.usecases.get_content import get_content_by_id
@@ -14,7 +15,7 @@ labeler = BotLabeler()
 logger = logging.getLogger(__name__)
 
 
-@labeler.message(text="/start")
+@labeler.private_message(CommandRule("начать"))
 async def cmd_start(message: Message, message_sender: MessageSender) -> None:
     logger.debug("Start handler is called")
     user_id = message.from_id
@@ -28,7 +29,7 @@ async def cmd_start(message: Message, message_sender: MessageSender) -> None:
         raise
 
 
-@labeler.message(text="/help")
+@labeler.private_message(CommandRule("помощь"))
 async def cmd_help(message: Message, message_sender: MessageSender) -> None:
     logger.debug("Help handler is called")
     try:
@@ -40,7 +41,7 @@ async def cmd_help(message: Message, message_sender: MessageSender) -> None:
         raise
 
 
-@labeler.message()
+@labeler.private_message()
 async def text_handler(message: Message, message_sender: MessageSender) -> None:
     logger.debug("Text handler is called")
     user_id = message.from_id

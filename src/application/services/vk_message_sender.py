@@ -78,22 +78,23 @@ class VKMessageSender(MessageSender):
             logger.debug(f"Failed to send video {video.url}: {e}")
             await self.cache.remove(cache_key)
 
-            file_path = str(get_file_path(video))
-            attachment = await self.video_uploader.upload(
-                file_source=file_path,
-                description=video.description,
-            )
-            await self._safe_update_cache(
-                cache_key=cache_key,
-                attachment=attachment,
-                file_path=file_path,
-            )
-
-            await message.answer(
-                attachment=attachment,
-                message=video.description,
-                keyboard=keyboard_markup,
-            )
+            logger.warning(f"Video {video.url} is not supported")
+            # file_path = str(get_file_path(video))
+            # attachment = await self.video_uploader.upload(
+            #     file_source=file_path,
+            #     description=video.description,
+            # )
+            # await self._safe_update_cache(
+            #     cache_key=cache_key,
+            #     attachment=attachment,
+            #     file_path=file_path,
+            # )
+            #
+            # await message.answer(
+            #     attachment=attachment,
+            #     message=video.description,
+            #     keyboard=keyboard_markup,
+            # )
 
     async def send_media_group(self, message: Message, media_group: MediaGroup) -> None:
         cache_keys = tuple(CacheKey.create(node, Network.VK) for node in media_group)
@@ -107,6 +108,7 @@ class VKMessageSender(MessageSender):
             for cache_key in cache_keys:
                 await self.cache.remove(cache_key)
 
+            logger.debug("Uploading media group...")
             attachments = []
             for media, cache_key in zip(media_group, cache_keys):
                 file_path = str(get_file_path(media))
@@ -117,22 +119,21 @@ class VKMessageSender(MessageSender):
                             file_source=file_path,
                             peer_id=message.peer_id,
                         )
-                    case Video():
-                        attachment = await self.video_uploader.upload(
-                            file_source=file_path,
-                            peer_id=message.peer_id,
+                        logger.debug(f"Photo {media.url} uploaded")
+                        await self._safe_update_cache(
+                            cache_key=cache_key,
+                            attachment=attachment,
+                            file_path=file_path,
                         )
+                        attachments.append(attachment)
+
+                    case Video():
+                        logger.warning(f"Video {media.url} is not supported")
                     case _:
                         raise ValueError(f"Unsupported media type: {media}")
 
-                await self._safe_update_cache(
-                    cache_key=cache_key,
-                    attachment=attachment,
-                    file_path=file_path,
-                )
-                attachments.append(attachment)
-
             attachment = ",".join(attachments)
+            logger.debug(f"Media group {attachment} uploaded")
             await message.answer(attachment=attachment)
 
     @staticmethod

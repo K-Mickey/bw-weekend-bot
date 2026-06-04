@@ -31,21 +31,26 @@ async def handle_errors(e: Exception) -> None:
     logger.error(f"Error: {e}")
 
 
-async def start_polling() -> None:
-    if not settings.bot_token_vk:
+def start_polling() -> None:
+    if not settings.vk.bot_token:
         logger.error("VK_TOKEN not set in environment")
         return
 
-    bot = await get_vk_bot()
+    bot = get_vk_bot()
     logger.info("Starting VK bot in polling mode...")
 
-    await bot.run_polling()
+    bot.run_forever()
 
 
-async def get_vk_bot(callback: BotCallback | None = None) -> Bot:
-    bot = Bot(token=settings.vk.bot_token, labeler=labeler, callback=callback, error_handler=error_handler)
+def get_vk_bot(callback: BotCallback | None = None) -> Bot:
+    bot = Bot(
+        token=settings.vk.bot_token,
+        labeler=labeler,
+        callback=callback,
+        error_handler=error_handler,
+    )
 
-    cache = await get_cache()
+    cache = asyncio.run(get_cache())
     message_sender = VKMessageSender(bot, cache)
 
     middleware = InjectionMiddleware
@@ -57,4 +62,4 @@ async def get_vk_bot(callback: BotCallback | None = None) -> Bot:
 
 if __name__ == "__main__":
     logging.basicConfig(level=settings.log_level)
-    asyncio.run(start_polling())
+    start_polling()
