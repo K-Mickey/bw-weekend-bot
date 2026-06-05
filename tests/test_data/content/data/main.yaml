@@ -1,0 +1,19 @@
+id: main
+media:
+  - type: photo
+    local_path: main.jpg
+    description: >
+      Привет, дорогой друг!👋
+keyboard:
+  - - text: "Цены"
+      target: prices
+    - text: "Музыкальные группы"
+      target: music_groups
+  - - text: "Локации"
+      target: locations
+    - text: "Педагоги"
+      target: teachers
+  - - text: "Чат-болталка"
+      target: chat
+    - text: "Связь с организаторами"
+      target: contacts
