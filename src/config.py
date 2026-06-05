@@ -38,7 +38,6 @@ class Settings(BaseSettings):
     content_data_dir: Path = content_dir / "data"
     content_photo_dir: Path = content_dir / "photo"
     content_video_dir: Path = content_dir / "video"
-    test_data_dir: Path = base_dir / "tests" / "test_data"
 
     log_level: str = "INFO"
 

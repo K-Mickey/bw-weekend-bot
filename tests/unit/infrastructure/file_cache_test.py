@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from src.config import settings
 from src.domain.value_objects.network import Network
 from src.infrastructure.file_cache.exceptions import MediaCacheExpired, MediaCacheMiss
 from src.infrastructure.file_cache.in_memory import InMemoryMediaCache
@@ -23,8 +24,8 @@ def cache_key() -> CacheKey:
 
 
 @pytest.fixture
-def temp_file(photo_dir) -> Path:
-    return photo_dir / "exist.jpg"
+def temp_file() -> Path:
+    return settings.content_photo_dir / "exist.jpg"
 
 
 @pytest.fixture

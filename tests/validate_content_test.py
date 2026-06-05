@@ -12,6 +12,7 @@ from scripts.validate_content import (
     load_files,
     main,
 )
+from src.config import settings
 
 
 @pytest.fixture
@@ -26,9 +27,9 @@ def copy_yaml_to_tmp(tmp_path: Path) -> Callable[[list[Path]], Path]:
     return _inner
 
 
-def test_get_files(root_dir: Path, data_dir: Path):
+def test_get_files(root_dir: Path):
     files = get_files(root_dir)
-    expected_count = len(list(data_dir.glob("*.yaml")))
+    expected_count = len(list(settings.content_data_dir.glob("*.yaml")))
     assert len(files) == expected_count
 
 
@@ -70,16 +71,16 @@ def test_check_domain_objects_failure(get_test_data):
     assert check_domain_objects((node,)) == 1
 
 
-def test_main_success(data_dir: Path, copy_yaml_to_tmp):
-    project_root = copy_yaml_to_tmp([data_dir / "valid_menu.yaml"])
+def test_main_success(copy_yaml_to_tmp):
+    project_root = copy_yaml_to_tmp([settings.content_data_dir / "valid_menu.yaml"])
     assert main(project_root) == 0
 
 
-def test_main_failure_duplicate_id(data_dir: Path, copy_yaml_to_tmp):
+def test_main_failure_duplicate_id(copy_yaml_to_tmp):
     project_root = copy_yaml_to_tmp(
         [
-            data_dir / "duplicate_a.yaml",
-            data_dir / "duplicate_b.yaml",
+            settings.content_data_dir / "duplicate_a.yaml",
+            settings.content_data_dir / "duplicate_b.yaml",
         ]
     )
     assert main(project_root) == 1

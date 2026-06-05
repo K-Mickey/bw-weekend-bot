@@ -14,28 +14,22 @@ from src.domain.value_objects.user_key import UserKey
 
 @pytest.fixture
 def root_dir() -> Path:
-    return settings.test_data_dir
+    return settings.base_dir / "tests" / "test_data"
+
+
+@pytest.fixture(autouse=True)
+def override_content_dirs(monkeypatch, root_dir):
+    test_content_dir = root_dir / "content"
+    monkeypatch.setattr(settings, "content_dir", test_content_dir)
+    monkeypatch.setattr(settings, "content_data_dir", test_content_dir / "data")
+    monkeypatch.setattr(settings, "content_photo_dir", test_content_dir / "photo")
+    monkeypatch.setattr(settings, "content_video_dir", test_content_dir / "video")
 
 
 @pytest.fixture
-def data_dir(root_dir) -> Path:
-    return root_dir / "content" / "data"
-
-
-@pytest.fixture
-def photo_dir(root_dir) -> Path:
-    return root_dir / "content" / "photo"
-
-
-@pytest.fixture
-def video_dir(root_dir) -> Path:
-    return root_dir / "content" / "video"
-
-
-@pytest.fixture
-def get_test_data(data_dir):
+def get_test_data():
     def _get(name: str):
-        full_path = data_dir / name
+        full_path = settings.content_data_dir / name
         yaml = YAML(typ="safe")
         with full_path.open("r", encoding="utf-8") as f:
             return yaml.load(f)
@@ -44,9 +38,9 @@ def get_test_data(data_dir):
 
 
 @pytest.fixture
-def get_content(data_dir):
+def get_content():
     def _get(name: str):
-        full_path = data_dir / name
+        full_path = settings.content_data_dir / name
         yaml = YAML(typ="safe")
         file = full_path.read_text(encoding="utf-8")
         return content_factory(yaml.load(file))

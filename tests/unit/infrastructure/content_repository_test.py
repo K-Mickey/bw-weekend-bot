@@ -1,5 +1,3 @@
-import pytest
-
 from src.domain.aggregates import Post, PostGroup
 from src.domain.entities.keyboard import Keyboard, KeyboardButton, KeyboardRow
 from src.domain.entities.media import Text
@@ -7,29 +5,17 @@ from src.domain.value_objects.post_flag import PostFlag
 from src.infrastructure.content_repository import ContentRepository
 
 
-@pytest.fixture
-def patch_dir(data_dir):
-    from src.config import settings
-
-    original_dir = settings.content_data_dir
-    settings.content_data_dir = settings.base_dir / data_dir
-
-    yield
-
-    settings.content_data_dir = original_dir
-
-
-def test_content_repository_get_existing_node(patch_dir):
+def test_content_repository_get_existing_node():
     node = ContentRepository.get_node("menu_ok")
     assert isinstance(node, PostGroup)
 
 
-def test_content_repository_get_nonexistent_node(patch_dir):
+def test_content_repository_get_nonexistent_node():
     node = ContentRepository.get_node("nonexistent_node_id")
     assert node is None
 
 
-def test_content_repository_context(patch_dir):
+def test_content_repository_context():
     node = ContentRepository.get_node("menu_ok")
 
     content = node.posts[0]
