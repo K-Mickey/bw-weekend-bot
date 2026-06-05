@@ -1,3 +1,6 @@
+from src.infrastructure.state_store.base import StateStore
 from src.infrastructure.state_store.memory_store import InMemoryStateStore
 
-state_store = InMemoryStateStore()
+
+def get_state_store() -> StateStore:
+    return InMemoryStateStore.get_instance()

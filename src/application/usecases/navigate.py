@@ -5,7 +5,7 @@ from src.domain.value_objects.button import ButtonType
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.node import NodeName
 from src.domain.value_objects.user_key import UserKey
-from src.infrastructure.state_store import state_store
+from src.infrastructure.state_store import StateStore
 
 
 class NavigateException(Exception):
@@ -18,14 +18,14 @@ class ButtonNotFoundException(NavigateException):
         super().__init__(message, *args)
 
 
-def navigate(network: Network, external_user_id: int | str, button_label: str) -> Content:
+def navigate(state_store: StateStore, network: Network, external_user_id: int | str, button_label: str) -> Content:
     """
     Navigate from the current node to the next node based on the button label.
     Handles the 'Back' button to go back in history.
     Returns the content for the next (or previous) node.
     """
     user_key = UserKey(network, str(external_user_id))
-    current_node = get_current_content(user_key)
+    current_node = get_current_content(state_store, user_key)
 
     button = _find_button(current_node, button_label)
     if not button:

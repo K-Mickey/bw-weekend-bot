@@ -1,11 +1,21 @@
+from typing import Self
+
 from src.domain.entities.user_session import UserSession
 from src.domain.value_objects.user_key import UserKey
 from src.infrastructure.state_store.base import StateStore
 
 
 class InMemoryStateStore(StateStore):
+    _instance: Self | None = None
+
     def __init__(self):
         self._sessions: dict[UserKey, UserSession] = {}
+
+    @classmethod
+    def get_instance(cls) -> Self:
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
     def get_session(self, user_key: UserKey) -> UserSession | None:
         return self._sessions.get(user_key)

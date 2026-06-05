@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -7,8 +7,7 @@ from src.application.usecases.navigate import ButtonNotFoundException, navigate
 
 @pytest.fixture
 def mock_store():
-    with patch("src.application.usecases.navigate.state_store") as mock:
-        yield mock
+    yield Mock()
 
 
 @pytest.fixture
@@ -34,7 +33,7 @@ def test_navigate_forward(
     mock_store.get_session.return_value = session
     mock_get_content.side_effect = [post, post_group]
 
-    result = navigate(user_key.network, user_key.external_id, button_label)
+    result = navigate(mock_store, user_key.network, user_key.external_id, button_label)
 
     mock_store.push_node.assert_called_once_with(user_key, post_group.id)
     assert result == post_group
@@ -62,7 +61,7 @@ def test_navigate_back(
     mock_store.pop_node.side_effect = mock_pop_node
     mock_get_content.side_effect = [back_post, post_group]
 
-    result = navigate(user_key.network, user_key.external_id, "Back")
+    result = navigate(mock_store, user_key.network, user_key.external_id, "Back")
 
     mock_store.pop_node.assert_called_once_with(user_key)
     assert result == post_group
@@ -86,7 +85,7 @@ def test_navigate_back_at_root(
     mock_store.pop_node.return_value = None
     mock_get_content.side_effect = [post, post]
 
-    result = navigate(user_key.network, user_key.external_id, "Back")
+    result = navigate(mock_store, user_key.network, user_key.external_id, "Back")
 
     mock_store.pop_node.assert_called_once_with(user_key)
     assert result == post
@@ -106,6 +105,6 @@ def test_navigate_invalid_button(
     mock_get_content.return_value = post_group
 
     with pytest.raises(ButtonNotFoundException):
-        navigate(user_key.network, user_key.external_id, button_label)
+        navigate(mock_store, user_key.network, user_key.external_id, button_label)
 
     mock_store.push_node.assert_not_called()

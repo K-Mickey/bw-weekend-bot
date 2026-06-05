@@ -2,10 +2,10 @@ from src.application.button_helper import add_automatic_buttons
 from src.domain.aggregates import Content
 from src.domain.value_objects.user_key import UserKey
 from src.infrastructure.content_repository import ContentNotFoundException, ContentRepository
-from src.infrastructure.state_store import state_store
+from src.infrastructure.state_store import StateStore
 
 
-def get_current_content(user_key: UserKey) -> Content:
+def get_current_content(state_store: StateStore, user_key: UserKey) -> Content:
     """
     Retrieve content for the current node and present it as a ContentResponse.
     Raises an exception if the node is not found.

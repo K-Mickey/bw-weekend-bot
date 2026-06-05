@@ -13,6 +13,7 @@ from src.application.usecases.navigate import navigate
 from src.application.usecases.start_conversation import start_conversation
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.node import NodeName
+from src.infrastructure.state_store import StateStore
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -24,12 +25,12 @@ async def handle_errors(event: ErrorEvent) -> None:
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, message_sender: MessageSender) -> None:
+async def cmd_start(message: Message, message_sender: MessageSender, state_store: StateStore) -> None:
     logger.debug("Start handler is called")
     user_id = message.from_user.id
 
     try:
-        content = start_conversation(Network.TELEGRAM, user_id)
+        content = start_conversation(state_store, Network.TELEGRAM, user_id)
         await message_sender.send_content(message, content)
 
     except Exception:
@@ -50,7 +51,7 @@ async def cmd_help(message: Message, message_sender: MessageSender) -> None:
 
 
 @router.message(F.text)
-async def handle_text_message(message: Message, message_sender: MessageSender) -> None:
+async def handle_text_message(message: Message, message_sender: MessageSender, state_store: StateStore) -> None:
     logger.debug("Text handler is called")
     user_id = message.from_user.id
     text = message.text.strip()
@@ -58,7 +59,7 @@ async def handle_text_message(message: Message, message_sender: MessageSender) -
         return
 
     try:
-        content = navigate(Network.TELEGRAM, user_id, text)
+        content = navigate(state_store, Network.TELEGRAM, user_id, text)
         logger.debug(f"Navigated to {content.id}")
         await message_sender.send_content(message, content)
 

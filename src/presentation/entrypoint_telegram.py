@@ -8,6 +8,7 @@ from aiogram.types import BotCommand
 from src.application.services import TelegramMessageSender
 from src.config import settings
 from src.infrastructure.file_cache import get_cache
+from src.infrastructure.state_store import get_state_store
 from src.presentation.telegram_router import router
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,11 @@ def get_telegram_bot() -> Bot:
 async def get_telegram_dp(bot) -> Dispatcher:
     cache = await get_cache()
     message_sender = TelegramMessageSender(cache=cache)
-    dp = Dispatcher(message_sender=message_sender)
+    state_store = get_state_store()
+    dp = Dispatcher(
+        message_sender=message_sender,
+        state_store=state_store,
+    )
     dp.include_router(router)
     return dp
 

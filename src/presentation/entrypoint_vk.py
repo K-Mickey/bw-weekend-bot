@@ -9,6 +9,7 @@ from src.application.services import MessageSender
 from src.application.services.vk_message_sender import VKMessageSender
 from src.config import settings
 from src.infrastructure.file_cache import get_cache
+from src.infrastructure.state_store import get_state_store
 from src.presentation.vk_labeler import labeler
 
 logger = logging.getLogger(__name__)
@@ -17,9 +18,15 @@ error_handler = ErrorHandler()
 
 class InjectionMiddleware(BaseMiddleware[Message]):
     _message_sender: MessageSender | None = None
+    _state_store = get_state_store()
 
     async def pre(self) -> None:
-        self.send({"message_sender": self._message_sender})
+        self.send(
+            {
+                "message_sender": self._message_sender,
+                "state_store": self._state_store,
+            }
+        )
 
     @classmethod
     def set_sender(cls, message_sender: MessageSender):
