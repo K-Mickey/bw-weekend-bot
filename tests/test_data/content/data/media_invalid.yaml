@@ -1,0 +1,3 @@
+type: image
+local_path: some_image.jpg
+description: "real image"

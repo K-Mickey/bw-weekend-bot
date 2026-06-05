@@ -13,5 +13,3 @@ def media_factory(raw: Mapping) -> MediaItem:
             return Video(**raw)
         case NodeKind.TEXT:
             return Text(**raw)
-        case _:
-            raise ValueError(f"Unsupported media type: {kind}")
