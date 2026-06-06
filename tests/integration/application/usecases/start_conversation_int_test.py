@@ -5,17 +5,16 @@ from src.domain.aggregates import Content
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.node import NodeName
 from src.domain.value_objects.user_key import UserKey
-from src.infrastructure.state_store import InMemoryStateStore
-
-
-@pytest.fixture
-def state_store():
-    memory_store = InMemoryStateStore()
-    return memory_store
 
 
 @pytest.mark.parametrize(
-    "network, external_user_id", [(Network.TELEGRAM, 1), (Network.TELEGRAM, "1"), (Network.VK, 1), (Network.VK, "1")]
+    "network, external_user_id",
+    [
+        (Network.TELEGRAM, 1),
+        (Network.TELEGRAM, "1"),
+        (Network.VK, 1),
+        (Network.VK, "1"),
+    ],
 )
 def test_start_conversation(network, external_user_id, state_store):
     content = start_conversation(state_store, network, external_user_id)

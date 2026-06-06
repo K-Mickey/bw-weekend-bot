@@ -15,5 +15,5 @@ keyboard:
       target: teachers
   - - text: "Чат-болталка"
       target: chat
-    - text: "Связь с организаторами"
+    - text: "Контакты"
       target: contacts

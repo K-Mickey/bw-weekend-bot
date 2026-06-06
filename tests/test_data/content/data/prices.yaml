@@ -1,0 +1,7 @@
+id: prices
+media:
+  - type: text
+    text: Prices
+keyboard:
+  - - text: Контакты
+      target: contacts

@@ -27,6 +27,9 @@ class KeyboardRow(BaseModel):
     def __getitem__(self, index) -> KeyboardButton:
         return self.buttons[index]
 
+    def __len__(self) -> int:
+        return len(self.buttons)
+
 
 class Keyboard(BaseModel):
     rows: list[KeyboardRow] = Field(default_factory=list)

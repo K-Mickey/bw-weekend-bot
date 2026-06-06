@@ -10,6 +10,7 @@ from src.domain.entities.user_session import UserSession
 from src.domain.factories import content_factory
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.user_key import UserKey
+from src.infrastructure.state_store import InMemoryStateStore, StateStore
 
 
 @pytest.fixture
@@ -56,6 +57,11 @@ def user_key() -> UserKey:
 @pytest.fixture
 def session(user_key) -> UserSession:
     return UserSession(user_key=user_key, root_node_id="main")
+
+
+@pytest.fixture
+def state_store() -> StateStore:
+    return InMemoryStateStore()
 
 
 @pytest.fixture

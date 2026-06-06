@@ -41,7 +41,7 @@ def navigate(state_store: StateStore, network: Network, external_user_id: int | 
         case _:
             state_store.push_node(user_key, button.target)
 
-    return get_current_content(user_key)
+    return get_current_content(state_store, user_key)
 
 
 def _find_button(node: Content, target_label: str) -> KeyboardButton | None:
