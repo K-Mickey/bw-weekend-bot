@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from ruamel.yaml import YAML
 
+from src.application.services import MessageSender, TelegramMessageSender
 from src.config import settings
 from src.domain.aggregates import Post, PostGroup
 from src.domain.entities.media import Text
@@ -10,6 +11,7 @@ from src.domain.entities.user_session import UserSession
 from src.domain.factories import content_factory
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.user_key import UserKey
+from src.infrastructure.file_cache import InMemoryMediaCache
 from src.infrastructure.state_store import InMemoryStateStore, StateStore
 
 
@@ -62,6 +64,12 @@ def session(user_key) -> UserSession:
 @pytest.fixture
 def state_store() -> StateStore:
     return InMemoryStateStore()
+
+
+@pytest.fixture
+def message_sender() -> MessageSender:
+    cache = InMemoryMediaCache()
+    return TelegramMessageSender(cache)
 
 
 @pytest.fixture
