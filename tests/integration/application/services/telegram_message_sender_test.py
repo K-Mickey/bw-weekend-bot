@@ -5,12 +5,14 @@ import pytest
 from aiogram.types import FSInputFile, Message, ReplyKeyboardMarkup
 from aiogram.utils.media_group import MediaType as TMediaType
 
+from src.application.services import MessageSender, TelegramMessageSender
 from src.domain.entities import MediaGroup
 from src.domain.entities.keyboard import Keyboard, KeyboardButton, KeyboardRow
 from src.domain.entities.media import Photo, Text, Video
 from src.domain.value_objects.button import BaseButton, ButtonType
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.node import NodeName
+from src.infrastructure.file_cache import InMemoryMediaCache
 from src.infrastructure.file_cache.exceptions import MediaCacheError
 from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
 from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
@@ -39,6 +41,12 @@ class AnyMediaGroup:
 
     def __repr__(self):
         return "AnyMediaGroup()"
+
+
+@pytest.fixture
+def message_sender() -> MessageSender:
+    cache = InMemoryMediaCache()
+    return TelegramMessageSender(cache)
 
 
 @pytest.fixture

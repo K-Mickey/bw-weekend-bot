@@ -69,7 +69,7 @@ class VKMessageSender(MessageSender):
         photos = filter(lambda x: isinstance(x, Photo), media_group)
         cache_keys = {photo: CacheKey.create(photo, Network.VK) for photo in photos}
         try:
-            cache_records = await self.cache.get_many(cache_keys)
+            cache_records = await self.cache.get_many(cache_keys.values())
             attachments = []
             for media in media_group:
                 match media:
