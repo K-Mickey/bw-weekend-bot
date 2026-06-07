@@ -226,7 +226,9 @@ def main():
     statistic = checker.check_content([NodeName.ROOT])
 
     result = statistic.get_statistic(
-        all_yaml_files=checker.get_all_files(), all_photos=checker.get_all_photos(), all_videos=checker.get_all_videos()
+        all_yaml_files=checker.get_all_files(),
+        all_photos=checker.get_all_photos(),
+        all_videos=checker.get_all_videos(),
     )
     log.info(result)
 
