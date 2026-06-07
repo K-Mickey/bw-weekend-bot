@@ -47,8 +47,7 @@ def navigate(state_store: StateStore, network: Network, external_user_id: int | 
 def _find_button(node: Content, target_label: str) -> KeyboardButton | None:
     content = node.posts if isinstance(node, PostGroup) else [node]
     for post in content:
-        for row in post.keyboard:
-            for button in row:
-                if button.text == target_label:
-                    return button
+        for button in post.keyboard.get_buttons():
+            if button.text == target_label:
+                return button
     return None

@@ -60,3 +60,6 @@ class Keyboard(BaseModel):
 
     def add_row(self, row: KeyboardRow):
         self.rows.append(row)
+
+    def get_buttons(self) -> list[KeyboardButton]:
+        return [button for row in self.rows for button in row]

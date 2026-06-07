@@ -26,7 +26,7 @@ def get_content_by_id(node_id: str) -> Content:
     Raises an exception if the node is not found.
     Be aware that automatic button logic is not applied.
     """
-    node = ContentRepository.get_node(node_id)
+    node = ContentRepository().get_node(node_id)
     if node is None:
         raise ContentNotFoundException(f"Node not found: {node_id}")
 

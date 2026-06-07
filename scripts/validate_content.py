@@ -1,159 +1,242 @@
-"""
-Refactored content validation script.
-All user‑facing messages are in English and emitted through the standard logging module.
-The script performs three independent checks on the YAML files placed in ``content/data``:
-
-1. **Unique node IDs** – each file must contain an ``id`` field and the values must be unique.
-2. **Target existence** – every ``target`` referenced in a ``keyboard`` entry must point to an existing ``id``.
-3. **Domain validation** – raw node dictionaries are built into domain objects via ``node_factory``;
-   any ``pydantic.ValidationError`` is counted as a validation error.
-
-The module is deliberately split into small, pure functions to make unit testing trivial.
-"""
-
 import logging
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Iterable, NamedTuple, Sequence
 
-from pydantic import ValidationError
-from ruamel.yaml import YAML
-
-from src.domain.factories import content_factory
-
-log = logging.getLogger(__name__)
-
-
-def get_files(root: Path) -> tuple[Path, ...]:
-    """Return a sorted tuple of all ``*.yaml`` files under ``root/content/data``.
-
-    Parameters
-    ----------
-    root: Path
-        Project root directory (usually ``Path(__file__).parents[2]``).
-    """
-    data_dir = root / "content" / "data"
-    return tuple(sorted(data_dir.rglob("*.yaml")))
+from src.config import settings
+from src.domain.aggregates import Content, Post
+from src.domain.entities import MediaGroup
+from src.domain.entities.media import MediaType, Photo, Video
+from src.domain.value_objects.button import ButtonType
+from src.domain.value_objects.node import NodeName
+from src.infrastructure.content_repository import ContentRepository
+from src.infrastructure.file_provider import FileNotFound, get_file_path, get_text_file
 
 
-def _load_yaml(file_path: Path) -> dict | None:
-    """Parse a single yaml file.
-
-    Returns the parsed dictionary on success or ``None`` if parsing fails.
-    Errors are logged with ``log.error``.
-    """
-    try:
-        with file_path.open("r", encoding="utf-8") as fh:
-            data = YAML(typ="safe").load(fh) or {}
-            return data
-    except Exception as exc:  # includes YAMLError and IO errors
-        log.error("Failed to parse %s – %s", file_path, exc)
-        return None
+class Link(NamedTuple):
+    file_name: str
+    target: str
 
 
-def load_files(files: tuple[Path, ...]) -> tuple[dict, ...]:
-    """Parse each path once and return a tuple containing only successfully loaded dicts."""
-    loaded: list[dict] = []
-    for fp in files:
-        data = _load_yaml(fp)
-        if data is not None:
-            loaded.append(data)
-    return tuple(loaded)
+@dataclass
+class ValidStatistic:
+    files: set[str] = field(default_factory=set)
+    button_links: set[str] = field(default_factory=set)
+    media_links: set[MediaType] = field(default_factory=set)
+
+    invalid_files: list[str] = field(default_factory=list)
+    invalid_button_links: list[Link] = field(default_factory=list)
+    invalid_media_links: list[Link] = field(default_factory=list)
+
+    def add_file(self, file_name: str | Path):
+        self.files.add(file_name)
+
+    def add_button_link(self, file_name: str | Path):
+        self.button_links.add(file_name)
+
+    def add_media_link(self, file: MediaType):
+        self.media_links.add(file)
+
+    def add_invalid_file(self, file_name: str | Path):
+        self.invalid_files.append(file_name)
+
+    def add_invalid_button(self, file_name: str | Path, target: str):
+        self.invalid_button_links.append(Link(file_name, target))
+
+    def add_invalid_media(self, file_name: str | Path, media_name: str):
+        self.invalid_media_links.append(Link(file_name, media_name))
+
+    @property
+    def has_errors(self) -> bool:
+        return bool(self.invalid_files + self.invalid_button_links + self.invalid_media_links)
+
+    def get_statistic(
+        self,
+        all_yaml_files: Sequence[Path],
+        all_photos: Sequence[Path],
+        all_videos: Sequence[Path],
+    ) -> str:
+        statistic = [
+            "-" * 20,
+            "Amount of files in the directory:",
+            f"- {len(all_yaml_files)} files",
+            f"- {len(all_photos)} photos",
+            f"- {len(all_videos)} videos",
+            "",
+            "The bot will use of them:",
+            f"- {len(self.button_links)} files through buttons + some required files(main, help, error)",
+            f"- {len(set(media.local_path for media in self.media_links if isinstance(media, Photo)))} photos",
+            f"- {len(set(media.local_path for media in self.media_links if isinstance(media, Video)))} videos",
+            "",
+            "Invalid files:",
+            f"- {len(self.invalid_files)} invalid files(syntax errors)",
+            f"- {len(self.invalid_button_links)} invalid button links",
+            f"- {len(self.invalid_media_links)} invalid media links",
+            "-" * 20,
+            "Files with syntax errors:",
+            *[f"- {file}" for file in self.invalid_files],
+            "",
+            "Files with invalid button links:",
+            *[f"- {file} -> {target}" for file, target in self.invalid_button_links],
+            "",
+            "Files with invalid media links:",
+            *[f"- {file} -> {media}" for file, media in self.invalid_media_links],
+            "-" * 20,
+            "Unused files:",
+            *[
+                f"- {file.relative_to(settings.content_data_dir)}"
+                for file in set(all_yaml_files) - set(get_text_file(file) for file in self.button_links)
+            ],
+            "Unused photos:",
+            *[
+                f"- {file.relative_to(settings.content_photo_dir)}"
+                for file in set(all_photos) - set(get_file_path(media) for media in self.media_links)
+            ],
+            "Unused videos:",
+            *[
+                f"- {file.relative_to(settings.content_video_dir)}"
+                for file in set(all_videos) - set(get_file_path(media) for media in self.media_links)
+            ],
+            "-" * 20,
+        ]
+
+        return "\n".join(statistic)
 
 
-def check_node_ids(nodes: tuple[dict, ...]) -> int:
-    """Validate that every node defines a unique ``id`` field.
-    Returns the count of detected errors.
-    """
-    seen: set[str] = set()
-    errors = 0
-    for node in nodes:
-        nid = node.get("id")
-        if not nid:
-            log.error("Node missing required field `id`: %s", node)
-            errors += 1
-            continue
-        if nid in seen:
-            log.error("Duplicate node id `%s` found", nid)
-            errors += 1
+class Checker:
+    def __init__(self):
+        self.repository = ContentRepository()
+        self.statistic: ValidStatistic | None = None
+
+    def check_content(self, files: Iterable[str]) -> ValidStatistic:
+        self.statistic = ValidStatistic()
+
+        visit_line = [file for file in files]
+        visited = set()
+
+        while visit_line:
+            file_name = visit_line.pop()
+            if file_name in visited:
+                continue
+
+            visited.add(file_name)
+
+            content = self.repository.get_node(file_name)
+            self._analyze_content(content, file_name)
+
+            if not content:
+                continue
+
+            posts = [content] if isinstance(content, Post) else content.posts
+            for post in posts:
+                buttons = filter(lambda x: x.type == ButtonType.DEFAULT, post.keyboard.get_buttons())
+                visit_line += [button.target for button in buttons]
+
+        return self.statistic
+
+    def _analyze_content(self, content: Content, file_name: str | Path):
+        self.statistic.add_file(file_name)
+        if not content:
+            self.statistic.add_invalid_file(file_name)
         else:
-            seen.add(nid)
-    return errors
+            invalid_media = self._check_content_media_links(content)
+            for media in invalid_media:
+                self.statistic.add_invalid_media(file_name, media)
+            invalid_buttons = self._check_content_button_links(content)
+            for button in invalid_buttons:
+                self.statistic.add_invalid_button(file_name, button)
+
+    def _check_content_media_links(self, content: Content) -> list[str]:
+        invalid_media_files = []
+        posts = [content] if isinstance(content, Post) else content.posts
+        for post in posts:
+            media = post.media if isinstance(post.media, MediaGroup) else [post.media]
+            for media_item in media:
+                if isinstance(media_item, MediaType):
+                    self.statistic.add_media_link(media_item)
+                    try:
+                        get_file_path(media_item)
+                    except FileNotFound:
+                        invalid_media_files.append(media_item)
+
+        return invalid_media_files
+
+    def _check_content_button_links(self, content: Content) -> list[str]:
+        invalid_button_links = []
+        posts = [content] if isinstance(content, Post) else content.posts
+        for post in posts:
+            buttons = filter(lambda x: x.type == ButtonType.DEFAULT, post.keyboard.get_buttons())
+            for button in buttons:
+                target = button.target
+                self.statistic.add_button_link(button.target)
+                if not self.repository.get_node(target):
+                    invalid_button_links.append(target)
+        return invalid_button_links
+
+    @staticmethod
+    def get_all_files():
+        data_dir = settings.content_data_dir
+        files = sorted(data_dir.rglob("*.yaml"))
+        return [file for file in files if file.is_file() and file.name != ".gitkeep"]
+
+    @staticmethod
+    def get_all_photos():
+        photo_dir = settings.content_photo_dir
+        files = sorted(photo_dir.rglob("*"))
+        return [file for file in files if file.is_file() and file.name != ".gitkeep"]
+
+    @staticmethod
+    def get_all_videos():
+        video_dir = settings.content_video_dir
+        files = sorted(video_dir.rglob("*"))
+        return [file for file in files if file.is_file() and file.name != ".gitkeep"]
 
 
-def check_target_exists(nodes: tuple[dict, ...]) -> int:
-    """Ensure each button ``target`` references an existing node ``id``.
-    Returns the number of broken references.
-    """
-    valid_ids = {n.get("id") for n in nodes if n.get("id")}
-    errors = 0
-    for node in nodes:
-        for post in node.get("posts", []):
-            for row in post.get("keyboard", []):
-                for btn in row:
-                    target = btn.get("target")
-                    if target and target not in valid_ids:
-                        log.error(
-                            "Node `%s` contains unknown target `%s`",
-                            node.get("id"),
-                            target,
-                        )
-                        errors += 1
-    return errors
+def check_base_file_exist() -> list[str]:
+    repository = ContentRepository()
+    not_exist_files = []
+    for file in NodeName:
+        if not repository.get_node(file):
+            not_exist_files.append(file)
+
+    return not_exist_files
 
 
-def check_domain_objects(nodes: tuple[dict, ...]) -> int:
-    """Instantiate domain objects via ``node_factory`` and count validation errors.
-    Any ``pydantic.ValidationError`` raised by the domain models is logged and
-    counted as a single error for the offending node.
-    """
-    errors = 0
-    for raw in nodes:
-        try:
-            content_factory(raw)
-        except ValidationError as exc:
-            log.error(
-                "Domain validation failed for node `%s`: %s",
-                raw.get("id", "<no-id>"),
-                exc,
-            )
-            errors += 1
-    return errors
-
-
-def main(project_root: Path) -> int:
-    """Run the full validation pipeline.
-    Returns ``0`` on success, ``1`` when any validation error is found.
-    """
-    yaml_files = get_files(project_root)
-    if not yaml_files:
-        log.info("No yaml files found – nothing to validate.")
-        return 0
-
-    nodes = load_files(yaml_files)
-
-    total_errors = len(yaml_files) - len(nodes)
-    total_errors += check_node_ids(nodes)
-    total_errors += check_target_exists(nodes)
-    total_errors += check_domain_objects(nodes)
-
-    if total_errors:
-        log.error("%d validation error(s) found.", total_errors)
-        return 1
-    else:
-        log.info("All yaml files passed validation.")
-        return 0
-
-
-def run():
+def main():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(levelname)s] %(message)s",
     )
-    repo_root = Path(__file__).parents[1]
-    if repo_root.exists():
-        sys.exit(main(repo_root))
-    else:
-        log.error("Project root directory does not exist: %s", repo_root)
+
+    log = logging.getLogger(__name__)
+
+    not_exist_files = check_base_file_exist()
+    if not_exist_files:
+        log.info(
+            f"For correct work you need to create yaml files: "
+            f"{', '.join(not_exist_files)} in {settings.content_data_dir}"
+        )
+
+    if NodeName.ROOT in not_exist_files:
+        log.error("Root file is not found")
+        return 1
+
+    checker = Checker()
+    statistic = checker.check_content([NodeName.ROOT])
+
+    result = statistic.get_statistic(
+        all_yaml_files=checker.get_all_files(), all_photos=checker.get_all_photos(), all_videos=checker.get_all_videos()
+    )
+    log.info(result)
+
+    if statistic.has_errors:
+        return 1
+    return 0
+
+
+def run():
+    sys.exit(main())
 
 
 if __name__ == "__main__":

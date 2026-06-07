@@ -8,6 +8,9 @@ class Video(BaseModel):
     vk_url: str = Field(default="")
     description: str | None = None
 
+    def __hash__(self):
+        return hash((self.local_path, self.description))
+
     def __repr__(self):
         return f"VideoNode({self.local_path}, {self.vk_url}, {self.description})"
 

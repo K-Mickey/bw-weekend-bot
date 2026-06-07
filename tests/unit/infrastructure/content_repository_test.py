@@ -6,17 +6,17 @@ from src.infrastructure.content_repository import ContentRepository
 
 
 def test_content_repository_get_existing_node():
-    node = ContentRepository.get_node("menu_ok")
+    node = ContentRepository().get_node("menu_ok")
     assert isinstance(node, PostGroup)
 
 
 def test_content_repository_get_nonexistent_node():
-    node = ContentRepository.get_node("nonexistent_node_id")
+    node = ContentRepository().get_node("nonexistent_node_id")
     assert node is None
 
 
 def test_content_repository_context():
-    node = ContentRepository.get_node("menu_ok")
+    node = ContentRepository().get_node("menu_ok")
 
     content = node.posts[0]
     assert isinstance(content, Post)
