@@ -49,6 +49,10 @@ class MediaCache(abc.ABC):
         """Singleton accessor – concrete classes decide the pattern."""
         raise NotImplementedError
 
+    @abc.abstractmethod
+    async def close(self) -> None:
+        raise NotImplementedError
+
     @staticmethod
     def check_expiration(record: CacheRecord) -> bool:
         if record.expires:

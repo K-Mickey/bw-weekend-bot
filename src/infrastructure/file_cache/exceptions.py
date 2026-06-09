@@ -1,10 +1,16 @@
-class MediaCacheError(BaseException):
-    """Base exception for cache‑related problems."""
+from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
+
+
+class MediaCacheError(BaseException): ...
 
 
 class MediaCacheMiss(MediaCacheError):
-    """Raised when a requested cache entry does not exist."""
+    def __init__(self, cache_key: CacheKey, *args):
+        super().__init__(*args)
+        self.message = f"Cache miss for key: {cache_key}"
 
 
 class MediaCacheExpired(MediaCacheError):
-    """Raised when a requested cache entry has expired."""
+    def __init__(self, cache_key: CacheKey, *args):
+        super().__init__(*args)
+        self.message = f"Cache expired for key: {cache_key}"

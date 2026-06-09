@@ -26,6 +26,9 @@ class InMemoryMediaCache(MediaCache):
                     cls._instance = cls()
         return cls._instance
 
+    async def close(self):
+        pass
+
     async def get(self, cache_key: CacheKey) -> CacheRecord:
         async with self._store_lock:
             return self._get_unsafe(cache_key)
@@ -38,10 +41,10 @@ class InMemoryMediaCache(MediaCache):
         try:
             record = self._store[cache_key]
             if not self.check_expiration(record):
-                raise MediaCacheExpired(f"Cache miss for {cache_key}")
+                raise MediaCacheExpired(cache_key)
             return record
         except KeyError:
-            raise MediaCacheMiss(f"Cache miss for {cache_key}")
+            raise MediaCacheMiss(cache_key)
 
     async def add(self, cache_key: CacheKey, cache_record: CacheRecord) -> None:
         async with self._store_lock:
