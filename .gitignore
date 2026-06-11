@@ -5,3 +5,4 @@
 content/**/*
 !content/**/.gitkeep
 old/
+*.db
