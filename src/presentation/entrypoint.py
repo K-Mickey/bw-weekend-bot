@@ -28,7 +28,7 @@ def start_webhook() -> None:
 def connect_telegram_webhook(app: web.Application):
     telegram_bot = get_telegram_bot()
 
-    telegram_dp = asyncio.run(get_telegram_dp(telegram_bot))
+    telegram_dp = asyncio.run(get_telegram_dp())
     telegram_dp.startup.register(on_startup_telegram)
 
     handler = SimpleRequestHandler(

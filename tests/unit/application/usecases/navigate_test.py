@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -7,7 +7,7 @@ from src.application.usecases.navigate import ButtonNotFoundException, navigate
 
 @pytest.fixture
 def mock_store():
-    yield Mock()
+    yield AsyncMock()
 
 
 @pytest.fixture
@@ -16,7 +16,8 @@ def mock_get_content():
         yield mock
 
 
-def test_navigate_forward(
+@pytest.mark.asyncio
+async def test_navigate_forward(
     user_key,
     session,
     post_group,
@@ -33,13 +34,14 @@ def test_navigate_forward(
     mock_store.get_session.return_value = session
     mock_get_content.side_effect = [post, post_group]
 
-    result = navigate(mock_store, user_key.network, user_key.external_id, button_label)
+    result = await navigate(mock_store, user_key.network, user_key.external_id, button_label)
 
     mock_store.push_node.assert_called_once_with(user_key, post_group.id)
     assert result == post_group
 
 
-def test_navigate_back(
+@pytest.mark.asyncio
+async def test_navigate_back(
     user_key,
     session,
     post_group,
@@ -61,13 +63,14 @@ def test_navigate_back(
     mock_store.pop_node.side_effect = mock_pop_node
     mock_get_content.side_effect = [back_post, post_group]
 
-    result = navigate(mock_store, user_key.network, user_key.external_id, "Back")
+    result = await navigate(mock_store, user_key.network, user_key.external_id, "Back")
 
     mock_store.pop_node.assert_called_once_with(user_key)
     assert result == post_group
 
 
-def test_navigate_back_at_root(
+@pytest.mark.asyncio
+async def test_navigate_back_at_root(
     user_key,
     session,
     get_content,
@@ -85,13 +88,14 @@ def test_navigate_back_at_root(
     mock_store.pop_node.return_value = None
     mock_get_content.side_effect = [post, post]
 
-    result = navigate(mock_store, user_key.network, user_key.external_id, "Back")
+    result = await navigate(mock_store, user_key.network, user_key.external_id, "Back")
 
     mock_store.pop_node.assert_called_once_with(user_key)
     assert result == post
 
 
-def test_navigate_invalid_button(
+@pytest.mark.asyncio
+async def test_navigate_invalid_button(
     user_key,
     session,
     post_group,
@@ -105,6 +109,6 @@ def test_navigate_invalid_button(
     mock_get_content.return_value = post_group
 
     with pytest.raises(ButtonNotFoundException):
-        navigate(mock_store, user_key.network, user_key.external_id, button_label)
+        await navigate(mock_store, user_key.network, user_key.external_id, button_label)
 
     mock_store.push_node.assert_not_called()

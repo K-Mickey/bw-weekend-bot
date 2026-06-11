@@ -1,3 +1,4 @@
+import asyncio
 from typing import Self
 
 from src.domain.entities.user_session import UserSession
@@ -7,33 +8,42 @@ from src.infrastructure.state_store.base import StateStore
 
 class InMemoryStateStore(StateStore):
     _instance: Self | None = None
+    _lock = asyncio.Lock()
 
     def __init__(self):
         self._sessions: dict[UserKey, UserSession] = {}
+        self._store_lock = asyncio.Lock()
 
     @classmethod
-    def get_instance(cls) -> Self:
+    async def get_instance(cls) -> Self:
         if cls._instance is None:
-            cls._instance = cls()
+            async with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls()
         return cls._instance
 
-    def get_session(self, user_key: UserKey) -> UserSession | None:
-        return self._sessions.get(user_key)
+    async def get_session(self, user_key: UserKey) -> UserSession | None:
+        async with self._store_lock:
+            return self._sessions.get(user_key)
 
-    def create_or_reset(self, user_key: UserKey, root_node_id: str) -> UserSession:
-        session = UserSession(user_key=user_key, root_node_id=root_node_id)
-        self._sessions[user_key] = session
-        return session
+    async def create_or_reset(self, user_key: UserKey, root_node_id: str) -> UserSession:
+        async with self._store_lock:
+            session = UserSession(user_key=user_key, root_node_id=root_node_id)
+            self._sessions[user_key] = session
+            return session
 
-    def push_node(self, user_key: UserKey, node_id: str) -> None:
-        if session := self.get_session(user_key):
-            session.push(node_id)
+    async def push_node(self, user_key: UserKey, node_id: str) -> None:
+        async with self._store_lock:
+            if session := self._sessions.get(user_key):
+                session.push(node_id)
 
-    def pop_node(self, user_key: UserKey) -> str | None:
-        if session := self.get_session(user_key):
-            return session.pop()
-        return None
+    async def pop_node(self, user_key: UserKey) -> str | None:
+        async with self._store_lock:
+            if session := self._sessions.get(user_key):
+                return session.pop()
+            return None
 
-    def clear(self, user_key: UserKey) -> None:
-        if user_key in self._sessions:
-            del self._sessions[user_key]
+    async def clear(self, user_key: UserKey) -> None:
+        async with self._store_lock:
+            if user_key in self._sessions:
+                del self._sessions[user_key]

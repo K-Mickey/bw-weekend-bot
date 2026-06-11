@@ -7,8 +7,8 @@ from aiogram.types import BotCommand
 
 from src.application.services import TelegramMessageSender
 from src.config import settings
-from src.infrastructure.file_cache import get_cache
-from src.infrastructure.state_store import get_state_store
+from src.infrastructure.file_cache import SQLiteMediaCache
+from src.infrastructure.state_store import InMemoryStateStore
 from src.presentation.telegram_router import router
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 async def start_polling() -> None:
     async with get_telegram_bot() as bot:
-        dp = await get_telegram_dp(bot)
+        dp = await get_telegram_dp()
         dp.startup.register(set_commands)
         logger.info("Starting Telegram bot in polling mode...")
         await dp.start_polling(bot)
@@ -26,10 +26,10 @@ def get_telegram_bot() -> Bot:
     return Bot(token=settings.telegram.bot_token, default=DefaultBotProperties(parse_mode="HTML"))
 
 
-async def get_telegram_dp(bot) -> Dispatcher:
-    cache = await get_cache()
+async def get_telegram_dp() -> Dispatcher:
+    cache = await SQLiteMediaCache.get_instance()
     message_sender = TelegramMessageSender(cache=cache)
-    state_store = get_state_store()
+    state_store = await InMemoryStateStore.get_instance()
     dp = Dispatcher(
         message_sender=message_sender,
         state_store=state_store,

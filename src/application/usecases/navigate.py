@@ -18,14 +18,14 @@ class ButtonNotFoundException(NavigateException):
         super().__init__(message, *args)
 
 
-def navigate(state_store: StateStore, network: Network, external_user_id: int | str, button_label: str) -> Content:
-    """
-    Navigate from the current node to the next node based on the button label.
-    Handles the 'Back' button to go back in history.
-    Returns the content for the next (or previous) node.
-    """
+async def navigate(
+    state_store: StateStore,
+    network: Network,
+    external_user_id: int | str,
+    button_label: str,
+) -> Content:
     user_key = UserKey(network, str(external_user_id))
-    current_node = get_current_content(state_store, user_key)
+    current_node = await get_current_content(state_store, user_key)
 
     button = _find_button(current_node, button_label)
     if not button:
@@ -33,15 +33,15 @@ def navigate(state_store: StateStore, network: Network, external_user_id: int | 
 
     match button.type:
         case ButtonType.MAIN_MENU:
-            state_store.create_or_reset(user_key, NodeName.ROOT)
+            await state_store.create_or_reset(user_key, NodeName.ROOT)
 
         case ButtonType.BACK:
-            state_store.pop_node(user_key)
+            await state_store.pop_node(user_key)
 
         case _:
-            state_store.push_node(user_key, button.target)
+            await state_store.push_node(user_key, button.target)
 
-    return get_current_content(state_store, user_key)
+    return await get_current_content(state_store, user_key)
 
 
 def _find_button(node: Content, target_label: str) -> KeyboardButton | None:

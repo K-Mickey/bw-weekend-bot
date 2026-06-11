@@ -22,7 +22,7 @@ async def cmd_start(message: Message, message_sender: MessageSender, state_store
     user_id = message.from_id
 
     try:
-        content = start_conversation(state_store, Network.TELEGRAM, user_id)
+        content = await start_conversation(state_store, Network.TELEGRAM, user_id)
         await message_sender.send_content(message, content)
 
     except Exception:
@@ -51,7 +51,7 @@ async def text_handler(message: Message, message_sender: MessageSender, state_st
         return
 
     try:
-        content = navigate(state_store, Network.TELEGRAM, user_id, text)
+        content = await navigate(state_store, Network.TELEGRAM, user_id, text)
         logger.debug(f"Navigated to {content.id}")
         await message_sender.send_content(message, content)
 

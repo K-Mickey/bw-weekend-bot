@@ -5,13 +5,13 @@ from src.infrastructure.content_repository import ContentNotFoundException, Cont
 from src.infrastructure.state_store import StateStore
 
 
-def get_current_content(state_store: StateStore, user_key: UserKey) -> Content:
+async def get_current_content(state_store: StateStore, user_key: UserKey) -> Content:
     """
     Retrieve content for the current node and present it as a ContentResponse.
     Raises an exception if the node is not found.
     If session is provided, applies automatic button logic for MenuNodes.
     """
-    session = state_store.get_session(user_key)
+    session = await state_store.get_session(user_key)
     node_id = session.current
 
     node = get_content_by_id(node_id)

@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -21,12 +21,13 @@ def mock_add_automatic_buttons():
 
 @pytest.fixture
 def state_store(session):
-    state_store = Mock()
+    state_store = AsyncMock()
     state_store.get_session.return_value = session
     yield state_store
 
 
-def test_get_content_returns_content_response(
+@pytest.mark.asyncio
+async def test_get_content_returns_content_response(
     session,
     post,
     mock_get_node,
@@ -36,7 +37,7 @@ def test_get_content_returns_content_response(
     session.push(post.id)
     mock_get_node.return_value = post
 
-    result = get_current_content(state_store, session.user_key)
+    result = await get_current_content(state_store, session.user_key)
 
     mock_get_node.assert_called_once_with(post.id)
     assert result == post
@@ -44,7 +45,8 @@ def test_get_content_returns_content_response(
     mock_add_automatic_buttons.assert_called_once_with(post, session)
 
 
-def test_get_content_raises_error_when_node_not_found(
+@pytest.mark.asyncio
+async def test_get_content_raises_error_when_node_not_found(
     session,
     mock_get_node,
     mock_add_automatic_buttons,
@@ -56,7 +58,7 @@ def test_get_content_raises_error_when_node_not_found(
     mock_get_node.return_value = None
 
     with pytest.raises(Exception) as exc_info:
-        get_current_content(state_store, session.user_key)
+        await get_current_content(state_store, session.user_key)
 
     assert "Node not found" in str(exc_info.value)
 

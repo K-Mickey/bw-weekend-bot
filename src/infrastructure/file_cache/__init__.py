@@ -11,12 +11,3 @@ The package provides:
 from .base import MediaCache
 from .in_memory import InMemoryMediaCache
 from .sqlite import SQLiteMediaCache
-
-
-async def get_cache() -> MediaCache:
-    """Return the singleton in‑memory cache instance.
-
-    If a different implementation is desired later (e.g. SQLite), replace the
-    body of this function accordingly.
-    """
-    return await InMemoryMediaCache.get_instance()

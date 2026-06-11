@@ -8,8 +8,8 @@ from vkbottle.callback import BotCallback
 from src.application.services import MessageSender
 from src.application.services.vk_message_sender import VKMessageSender
 from src.config import settings
-from src.infrastructure.file_cache import get_cache
-from src.infrastructure.state_store import get_state_store
+from src.infrastructure.file_cache import SQLiteMediaCache
+from src.infrastructure.state_store import InMemoryStateStore, StateStore
 from src.presentation.vk_labeler import labeler
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ error_handler = ErrorHandler()
 
 class InjectionMiddleware(BaseMiddleware[Message]):
     _message_sender: MessageSender | None = None
-    _state_store = get_state_store()
+    _state_store: StateStore | None = None
 
     async def pre(self) -> None:
         self.send(
@@ -31,6 +31,10 @@ class InjectionMiddleware(BaseMiddleware[Message]):
     @classmethod
     def set_sender(cls, message_sender: MessageSender):
         cls._message_sender = message_sender
+
+    @classmethod
+    def set_state_store(cls, state_store: StateStore):
+        cls._state_store = state_store
 
 
 @error_handler.register_error_handler(Exception)
@@ -57,11 +61,12 @@ def get_vk_bot(callback: BotCallback | None = None) -> Bot:
         error_handler=error_handler,
     )
 
-    cache = asyncio.run(get_cache())
+    cache, state_store = asyncio.gather(SQLiteMediaCache.get_instance(), InMemoryStateStore.get_instance())
     message_sender = VKMessageSender(bot, cache)
 
     middleware = InjectionMiddleware
     middleware.set_sender(message_sender)
+    middleware.set_state_store(state_store)
     bot.labeler.message_view.register_middleware(middleware)
 
     return bot
