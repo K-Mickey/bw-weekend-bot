@@ -43,7 +43,6 @@ class SQLiteStateStore(StateStore):
             CREATE TABLE IF NOT EXISTS user_sessions (
                 network TEXT NOT NULL,
                 external_id TEXT NOT NULL,
-                root_node_id TEXT NOT NULL,
                 history_json TEXT NOT NULL,
                 PRIMARY KEY (network, external_id)
             )
@@ -91,10 +90,10 @@ class SQLiteStateStore(StateStore):
         await self._connection.execute(
             """
             INSERT OR REPLACE INTO user_sessions
-            (network, external_id, root_node_id, history_json)
-            VALUES (?, ?, ?, ?)
+            (network, external_id, history_json)
+            VALUES (?, ?, ?)
             """,
-            (user_key.network, user_key.external_id, root_node_id, history_json),
+            (user_key.network, user_key.external_id, history_json),
         )
         await self._connection.commit()
 
