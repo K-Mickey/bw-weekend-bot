@@ -2,9 +2,9 @@ from src.domain.value_objects.user_key import UserKey
 
 
 class UserSession:
-    def __init__(self, user_key: UserKey, root_node_id: str):
+    def __init__(self, user_key: UserKey, history: list[str] | None = None):
         self.user_key = user_key
-        self.history = [root_node_id]
+        self.history = history or []
 
     @property
     def current(self) -> str:

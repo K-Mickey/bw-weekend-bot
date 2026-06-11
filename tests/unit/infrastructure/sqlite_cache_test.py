@@ -62,11 +62,11 @@ def make_cache_record(temp_file):
 
 
 @pytest.mark.asyncio
-async def test_get_instance():
-    instance = await SQLiteMediaCache.get_instance()
+async def test_get_instance(cache):
+    instance = await cache.get_instance()
     assert instance._instance is not None
 
-    same_instance = await SQLiteMediaCache.get_instance()
+    same_instance = await cache.get_instance()
     assert instance is same_instance
 
 

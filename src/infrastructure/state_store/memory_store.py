@@ -28,7 +28,7 @@ class InMemoryStateStore(StateStore):
 
     async def create_or_reset(self, user_key: UserKey, root_node_id: str) -> UserSession:
         async with self._store_lock:
-            session = UserSession(user_key=user_key, root_node_id=root_node_id)
+            session = UserSession(user_key=user_key, history=[root_node_id])
             self._sessions[user_key] = session
             return session
 
