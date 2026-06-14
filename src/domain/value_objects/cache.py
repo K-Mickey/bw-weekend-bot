@@ -42,7 +42,7 @@ class CacheRecord(NamedTuple):
     file_id: str
     mtime: float
     expires: float | None
-    updated_at: datetime | None
+    updated_at: datetime
 
     @classmethod
     def from_file(
@@ -50,12 +50,12 @@ class CacheRecord(NamedTuple):
         file_id: str,
         file_path: Path | str,
         expires: float | None = None,
+        updated_at: datetime | None = None,
     ) -> Self:
-        file_path = Path(file_path)
-        mtime = file_path.stat().st_mtime
+        mtime = Path(file_path).stat().st_mtime
         return cls(
             file_id=file_id,
             mtime=mtime,
             expires=expires,
-            updated_at=None,
+            updated_at=updated_at or datetime.now(),
         )

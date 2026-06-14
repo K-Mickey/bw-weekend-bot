@@ -4,10 +4,10 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import BotCommand
-from content_repository import LocalContentRepository
 
 from src.application.services import NavigationService, TelegramMessageSender
 from src.config import settings
+from src.infrastructure.content_repository import LocalContentRepository
 from src.infrastructure.file_cache import SQLiteMediaCache
 from src.infrastructure.state_store import MemoryStateStore
 from src.presentation.telegram_router import router

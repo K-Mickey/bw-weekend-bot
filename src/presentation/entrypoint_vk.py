@@ -1,7 +1,6 @@
 import asyncio
 import logging
 
-from content_repository import LocalContentRepository
 from vkbottle import BaseMiddleware, ErrorHandler
 from vkbottle.bot import Bot, Message
 from vkbottle.callback import BotCallback
@@ -9,6 +8,7 @@ from vkbottle.callback import BotCallback
 from src.application.services import MessageSender, NavigationService
 from src.application.services.vk_message_sender import VKMessageSender
 from src.config import settings
+from src.infrastructure.content_repository import LocalContentRepository
 from src.infrastructure.file_cache import SQLiteMediaCache
 from src.infrastructure.state_store import MemoryStateStore
 from src.presentation.vk_labeler import labeler
