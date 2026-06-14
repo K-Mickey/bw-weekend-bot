@@ -5,13 +5,11 @@ from ruamel.yaml import YAML
 
 from src.config import settings
 from src.domain.aggregates import Post, PostGroup
-from src.domain.entities.user_session import UserSession
 from src.domain.factories import content_factory
 from src.domain.ports import StateStore
 from src.domain.ports.content_repository import ContentRepository
 from src.domain.value_objects.media import Text
 from src.domain.value_objects.network import Network
-from src.domain.value_objects.node import NodeName
 from src.domain.value_objects.user_key import UserKey
 from src.infrastructure.content_repository import LocalContentRepository
 from src.infrastructure.state_store import MemoryStateStore
@@ -56,11 +54,6 @@ def get_content():
 @pytest.fixture
 def user_key() -> UserKey:
     return UserKey(Network.TELEGRAM, "123")
-
-
-@pytest.fixture
-def session(user_key) -> UserSession:
-    return UserSession(user_key=user_key, history=[NodeName.ROOT])
 
 
 @pytest.fixture

@@ -23,76 +23,67 @@ def get_main_menu_button():
     return KeyboardButton(text=BaseButton.MAIN_MENU, target=NodeName.ROOT, type=ButtonType.MAIN_MENU)
 
 
-def test_add_automatic_buttons_returns_post_node_unchanged(session, post):
-    result = add_automatic_buttons(post, session)
+def test_add_automatic_buttons_returns_post_node_unchanged(post):
+    result = add_automatic_buttons(post, (NodeName.ROOT,))
     assert result is post
 
 
-def test_add_automatic_buttons_returns_menu_node_unchanged_when_build_false(simple_post, session):
+def test_add_automatic_buttons_returns_menu_node_unchanged_when_build_false(simple_post):
     simple_post.flags.build = False
-    result = add_automatic_buttons(simple_post, session)
+    result = add_automatic_buttons(simple_post, (NodeName.ROOT,))
     assert result is simple_post
 
 
-def test_add_automatic_buttons_adds_back_button_when_conditions_met(simple_post, session):
+def test_add_automatic_buttons_adds_back_button_when_conditions_met(simple_post):
     simple_post.flags.is_main = False
-    session.push("other")
-    session.push("settings")  # History: [ROOT, other, settings]
 
-    result = add_automatic_buttons(simple_post, session)
+    result = add_automatic_buttons(simple_post, (NodeName.ROOT, "other", "settings"))
 
     assert len(result.keyboard) == 2
     assert result.keyboard[0] == get_test_keyboard_row()
     assert result.keyboard[1] == KeyboardRow(buttons=[get_back_button()])
 
 
-def test_add_automatic_buttons_does_not_add_back_button_when_history_length_1(simple_post, session):
+def test_add_automatic_buttons_does_not_add_back_button_when_history_length_1(simple_post):
     simple_post.flags.is_main = False
-    result = add_automatic_buttons(simple_post, session)
+    result = add_automatic_buttons(simple_post, (NodeName.ROOT,))
 
     assert len(result.keyboard) == 1
     assert result.keyboard[0] == get_test_keyboard_row()
 
 
-def test_add_automatic_buttons_adds_main_menu_button_when_conditions_met(simple_post, session):
+def test_add_automatic_buttons_adds_main_menu_button_when_conditions_met(simple_post):
     simple_post.flags.is_back = False
-    session.push("settings")  # History: [ROOT, settings]
 
-    result = add_automatic_buttons(simple_post, session)
+    result = add_automatic_buttons(simple_post, (NodeName.ROOT, "settings"))
 
     assert len(result.keyboard) == 2
     assert result.keyboard[0] == get_test_keyboard_row()
     assert result.keyboard[1] == KeyboardRow(buttons=[get_main_menu_button()])
 
 
-def test_add_automatic_buttons_does_not_add_main_menu_button_when_history_length_1(simple_post, session):
+def test_add_automatic_buttons_does_not_add_main_menu_button_when_history_length_1(simple_post):
     simple_post.flags.is_back = False
-    result = add_automatic_buttons(simple_post, session)
+    result = add_automatic_buttons(simple_post, (NodeName.ROOT,))
 
     assert len(result.keyboard) == 1
     assert result.keyboard[0] == get_test_keyboard_row()
 
 
-def test_add_automatic_buttons_adds_both_buttons_when_conditions_met(simple_post, session):
-    session.push("other")
-    session.push("settings")  # History: [ROOT, other, settings]
-
-    result = add_automatic_buttons(simple_post, session)
+def test_add_automatic_buttons_adds_both_buttons_when_conditions_met(simple_post):
+    result = add_automatic_buttons(simple_post, (NodeName.ROOT, "other", "settings"))
 
     assert len(result.keyboard) == 2
     assert result.keyboard[0] == get_test_keyboard_row()
     assert result.keyboard[1] == KeyboardRow(buttons=[get_main_menu_button(), get_back_button()])
 
 
-def test_add_automatic_buttons_preserves_original_menu_node(simple_post, session):
-    session.push("other")
-    session.push("settings")  # History: [ROOT, other, settings]
-
+def test_add_automatic_buttons_preserves_original_menu_node(simple_post):
     original_id = simple_post.id
     original_media = simple_post.media
     original_flags = simple_post.flags
 
-    result = add_automatic_buttons(simple_post, session)
+    result = add_automatic_buttons(simple_post, (NodeName.ROOT, "other", "settings"))
 
     assert simple_post.id == original_id
     assert simple_post.media == original_media
