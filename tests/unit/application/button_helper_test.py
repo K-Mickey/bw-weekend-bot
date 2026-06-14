@@ -1,8 +1,8 @@
 import pytest
 
-from src.application.button_helper import add_automatic_buttons
-from src.domain.entities.keyboard import KeyboardButton, KeyboardRow
+from src.application.keyboard_helper import add_automatic_buttons, find_target_button_in_content
 from src.domain.value_objects.button import BaseButton, ButtonType
+from src.domain.value_objects.keyboard import KeyboardButton, KeyboardRow
 from src.domain.value_objects.node import NodeName
 
 
@@ -101,3 +101,26 @@ def test_add_automatic_buttons_preserves_original_menu_node(simple_post, session
     assert result.id == original_id
     assert result.media == original_media
     assert len(result.keyboard) == 2
+
+
+@pytest.mark.parametrize(
+    "button_label", ("Цены", "Музыкальные группы", "Локации", "Педагоги", "Чат-болталка", "Контакты")
+)
+def test_find_target_button_in_content(get_content, button_label: str):
+    content = get_content("main.yaml")
+    result = find_target_button_in_content(content, button_label)
+    assert isinstance(result, KeyboardButton)
+
+
+@pytest.mark.parametrize("button_label", ("Button 1", "Button 2"))
+def test_find_target_button_in_content_with_group_posts(get_content, button_label: str):
+    content = get_content("menu_full.yaml")
+    result = find_target_button_in_content(content, button_label)
+    assert isinstance(result, KeyboardButton)
+
+
+@pytest.mark.parametrize("button_label", ("Назад", "Главное меню"))
+def test_find_target_button_in_content_not_found(get_content, button_label: str):
+    content = get_content("main.yaml")
+    result = find_target_button_in_content(content, button_label)
+    assert result is None

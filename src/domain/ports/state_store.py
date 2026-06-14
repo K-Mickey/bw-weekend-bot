@@ -9,30 +9,30 @@ class StateStore(ABC):
     @abstractmethod
     async def get_session(self, user_key: UserKey) -> UserSession | None:
         """Retrieve session for the given user key."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def create_or_reset(self, user_key: UserKey, root_node_id: str) -> UserSession:
         """Create a new session or reset existing one for the user."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def push_node(self, user_key: UserKey, node_id: str) -> None:
         """Push a node ID onto the user's navigation stack."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def pop_node(self, user_key: UserKey) -> str | None:
         """Pop the top node ID from the user's navigation stack and return it."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def clear(self, user_key: UserKey) -> None:
         """Clear the user's session data."""
-        pass
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
     async def get_instance(cls) -> Self:
         """Singleton accessor – concrete classes decide the pattern."""
-        pass
+        raise NotImplementedError

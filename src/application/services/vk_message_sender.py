@@ -9,21 +9,20 @@ from vkbottle import Text as VKText
 from vkbottle.bot import Message
 
 from src.application.services import MessageSender
-from src.domain.entities import MediaGroup
-from src.domain.entities.keyboard import Keyboard
-from src.domain.entities.media import Photo, Text, Video
+from src.domain.exceptions import CacheError
+from src.domain.ports import MediaCache
+from src.domain.ports.content_repository import ContentRepository
+from src.domain.value_objects.cache import CacheKey, CacheRecord
+from src.domain.value_objects.keyboard import Keyboard
+from src.domain.value_objects.media import MediaGroup, Photo, Text, Video
 from src.domain.value_objects.network import Network
-from src.infrastructure.file_cache import MediaCache
-from src.infrastructure.file_cache.exceptions import MediaCacheError
-from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
-from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
-from src.infrastructure.file_provider import get_file_path
 
 logger = logging.getLogger(__name__)
 
 
 class VKMessageSender(MessageSender):
-    def __init__(self, bot: Bot, cache: MediaCache):
+    def __init__(self, bot: Bot, cache: MediaCache, content_repository: ContentRepository):
+        super().__init__(content_repository)
         self.bot = bot
         self.cache = cache
         self.photo_uploader = PhotoMessageUploader(bot.api)
@@ -43,7 +42,7 @@ class VKMessageSender(MessageSender):
                 keyboard=keyboard_markup,
             )
 
-        except (VKAPIError, MediaCacheError) as e:
+        except (VKAPIError, CacheError) as e:
             logger.debug(f"Failed to send photo {photo.local_path}: {e}")
             attachment = await self._update_photo_from_local(
                 photo=photo,
@@ -83,7 +82,7 @@ class VKMessageSender(MessageSender):
             attachment = ",".join(attachments)
             await message.answer(attachment=attachment)
 
-        except (VKAPIError, MediaCacheError) as e:
+        except (VKAPIError, CacheError) as e:
             logger.debug(f"Failed to send media group: {e}")
 
             logger.debug("Uploading media group...")
@@ -114,12 +113,12 @@ class VKMessageSender(MessageSender):
     async def _update_photo_from_local(self, photo: Photo, cache_key: CacheKey, peer_id: int) -> str:
         await self.cache.remove(cache_key)
 
-        file_path = str(get_file_path(photo))
+        file_path = self.content_repository.get_media_path(photo)
         retries = 3
         for retry in range(retries):
             try:
                 attachment = await self.photo_uploader.upload(
-                    file_source=file_path,
+                    file_source=str(file_path),
                     peer_id=peer_id,
                 )
                 break

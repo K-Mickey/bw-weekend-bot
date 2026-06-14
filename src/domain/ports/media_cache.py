@@ -2,8 +2,7 @@ import abc
 from datetime import datetime, timedelta
 from typing import Iterable, Self
 
-from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
-from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
+from src.domain.value_objects.cache import CacheKey, CacheRecord
 
 
 class MediaCache(abc.ABC):

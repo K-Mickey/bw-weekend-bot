@@ -11,9 +11,11 @@ class UserSession:
         return self.history[-1]
 
     def push(self, node_id: str) -> None:
+        # todo: it doesn't work if use sqlite store
         self.history.append(node_id)
 
     def pop(self) -> str | None:
+        # todo: it doesn't work if use sqlite store
         if len(self.history) <= 1:
             return None
         return self.history.pop()

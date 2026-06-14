@@ -1,38 +1,41 @@
-from src.domain.aggregates import Post, PostGroup
-from src.domain.entities.keyboard import Keyboard, KeyboardButton, KeyboardRow
-from src.domain.entities.media import Text
-from src.domain.value_objects.post_flag import PostFlag
-from src.infrastructure.content_repository import ContentRepository
+from pathlib import Path
+
+import pytest
+
+from src.domain.aggregates import Content
+from src.domain.exceptions import ContentNotFoundError, MediaNotFoundError
+from src.domain.value_objects.media import MediaType, Photo, Video
+from src.infrastructure.content_repository import LocalContentRepository
 
 
-def test_content_repository_get_existing_node():
-    node = ContentRepository().get_node("menu_ok")
-    assert isinstance(node, PostGroup)
+@pytest.fixture
+def content_repository():
+    return LocalContentRepository()
 
 
-def test_content_repository_get_nonexistent_node():
-    node = ContentRepository().get_node("nonexistent_node_id")
-    assert node is None
+def test_content_repository_get_content(content_repository: LocalContentRepository):
+    content = content_repository.get_content("main.yaml")
+    assert isinstance(content, Content)
 
 
-def test_content_repository_context():
-    node = ContentRepository().get_node("menu_ok")
+@pytest.mark.parametrize("file_name", ("main.yaml", "main", Path("main.yaml"), Path("main")))
+def test_content_repository_get_content_path(content_repository: LocalContentRepository, file_name: Path | str):
+    path = content_repository.get_content_path(file_name)
+    assert path.exists()
 
-    content = node.posts[0]
-    assert isinstance(content, Post)
 
-    assert isinstance(content.media, Text)
-    assert content.media.text == "Hello world"
+def test_content_repository_nonexistent_content_path(content_repository: LocalContentRepository):
+    with pytest.raises(ContentNotFoundError):
+        content_repository.get_content_path("nonexistent_content.yaml")
 
-    assert content.keyboard == Keyboard(
-        rows=[
-            KeyboardRow(buttons=[KeyboardButton(text="settings", target="menu_settings")]),
-            KeyboardRow(buttons=[KeyboardButton(text="help", target="menu_help")]),
-        ]
-    )
 
-    assert content.flags == PostFlag(
-        is_back=False,
-        is_main=True,
-        build=True,
-    )
+@pytest.mark.parametrize("media", (Photo(local_path="exist.jpg"), Video(local_path="exist.mp4")))
+def test_content_repository_get_media_path(content_repository: LocalContentRepository, media: MediaType):
+    media_path = content_repository.get_media_path(media)
+    assert media_path.exists()
+
+
+def test_content_repository_get_media_path_not_found(content_repository: LocalContentRepository):
+    media = Photo(local_path="non_exist.jpg")
+    with pytest.raises(MediaNotFoundError):
+        content_repository.get_media_path(media)

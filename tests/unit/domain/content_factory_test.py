@@ -1,9 +1,10 @@
 import pytest
 
 from src.domain.aggregates import Post, PostGroup
-from src.domain.entities.media import Text
+from src.domain.exceptions import NotSupportedTypeError
 from src.domain.factories import content_factory
 from src.domain.value_objects.button import ButtonType
+from src.domain.value_objects.media import Text
 
 
 def test_content_factory_with_post(get_test_data):
@@ -29,7 +30,5 @@ def test_content_factory_with_group_posts(get_test_data):
 
 def test_content_factory_with_invalid_post(get_test_data):
     json = get_test_data("post_invalid_fields.yaml")
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(NotSupportedTypeError):
         content_factory(json)
-
-    assert str(e.value) == "Invalid node"

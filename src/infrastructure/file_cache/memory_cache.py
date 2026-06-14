@@ -2,15 +2,12 @@ import asyncio
 from datetime import datetime
 from typing import Iterable, Self
 
-from src.infrastructure.file_cache.base import (
-    CacheRecord,
-    MediaCache,
-)
-from src.infrastructure.file_cache.exceptions import MediaCacheExpired, MediaCacheMiss
-from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
+from src.domain.exceptions import CacheExpiredError, CacheMissError
+from src.domain.ports import MediaCache
+from src.domain.value_objects.cache import CacheKey, CacheRecord
 
 
-class InMemoryMediaCache(MediaCache):
+class MemoryMediaCache(MediaCache):
     _instance: Self | None = None
     _lock = asyncio.Lock()
 
@@ -41,10 +38,10 @@ class InMemoryMediaCache(MediaCache):
         try:
             record = self._store[cache_key]
             if not self.check_expiration(record):
-                raise MediaCacheExpired(cache_key)
+                raise CacheExpiredError(cache_key)
             return record
         except KeyError:
-            raise MediaCacheMiss(cache_key)
+            raise CacheMissError(cache_key)
 
     async def add(self, cache_key: CacheKey, cache_record: CacheRecord) -> None:
         async with self._store_lock:

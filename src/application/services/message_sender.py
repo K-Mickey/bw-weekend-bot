@@ -1,14 +1,16 @@
 from abc import ABC, abstractmethod
 
-from src.application.usecases.get_content import get_content_by_id
 from src.domain.aggregates import Content, PostGroup
-from src.domain.entities import MediaGroup
-from src.domain.entities.keyboard import Keyboard
-from src.domain.entities.media import Photo, Text, Video
+from src.domain.ports.content_repository import ContentRepository
+from src.domain.value_objects.keyboard import Keyboard
+from src.domain.value_objects.media import MediaGroup, Photo, Text, Video
 from src.domain.value_objects.node import NodeName
 
 
 class MessageSender(ABC):
+    def __init__(self, content_repository: ContentRepository):
+        self.content_repository = content_repository
+
     async def send_content(self, message, content: Content) -> None:
         posts = content.posts if isinstance(content, PostGroup) else [content]
         for post in posts:
@@ -26,7 +28,7 @@ class MessageSender(ABC):
                     raise ValueError(f"Unsupported media type: {media}")
 
     async def send_error_message(self, message) -> None:
-        content = get_content_by_id(NodeName.ERROR)
+        content = self.content_repository.get_content(NodeName.ERROR)
         await self.send_content(message, content)
 
     @abstractmethod

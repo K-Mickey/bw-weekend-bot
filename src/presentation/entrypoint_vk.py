@@ -1,15 +1,16 @@
 import asyncio
 import logging
 
+from content_repository import LocalContentRepository
 from vkbottle import BaseMiddleware, ErrorHandler
 from vkbottle.bot import Bot, Message
 from vkbottle.callback import BotCallback
 
-from src.application.services import MessageSender
+from src.application.services import MessageSender, NavigationService
 from src.application.services.vk_message_sender import VKMessageSender
 from src.config import settings
 from src.infrastructure.file_cache import SQLiteMediaCache
-from src.infrastructure.state_store import InMemoryStateStore, StateStore
+from src.infrastructure.state_store import MemoryStateStore
 from src.presentation.vk_labeler import labeler
 
 logger = logging.getLogger(__name__)
@@ -18,13 +19,13 @@ error_handler = ErrorHandler()
 
 class InjectionMiddleware(BaseMiddleware[Message]):
     _message_sender: MessageSender | None = None
-    _state_store: StateStore | None = None
+    _navigation_service: NavigationService | None = None
 
     async def pre(self) -> None:
         self.send(
             {
                 "message_sender": self._message_sender,
-                "state_store": self._state_store,
+                "navigation_service": self._navigation_service,
             }
         )
 
@@ -33,8 +34,8 @@ class InjectionMiddleware(BaseMiddleware[Message]):
         cls._message_sender = message_sender
 
     @classmethod
-    def set_state_store(cls, state_store: StateStore):
-        cls._state_store = state_store
+    def set_navigation_service(cls, navigation_service: NavigationService):
+        cls._navigation_service = navigation_service
 
 
 @error_handler.register_error_handler(Exception)
@@ -61,12 +62,20 @@ def get_vk_bot(callback: BotCallback | None = None) -> Bot:
         error_handler=error_handler,
     )
 
-    cache, state_store = asyncio.gather(SQLiteMediaCache.get_instance(), InMemoryStateStore.get_instance())
-    message_sender = VKMessageSender(bot, cache)
+    cache, state_store = asyncio.gather(SQLiteMediaCache.get_instance(), MemoryStateStore.get_instance())
+    message_sender = VKMessageSender(
+        bot=bot,
+        cache=cache,
+        content_repository=LocalContentRepository(),
+    )
+    navigation_service = NavigationService(
+        state_store=state_store,
+        content_repository=LocalContentRepository(),
+    )
 
     middleware = InjectionMiddleware
     middleware.set_sender(message_sender)
-    middleware.set_state_store(state_store)
+    middleware.set_navigation_service(navigation_service)
     bot.labeler.message_view.register_middleware(middleware)
 
     return bot

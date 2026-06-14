@@ -1,14 +1,22 @@
 from src.domain.aggregates import Content, Post, PostGroup
-from src.domain.entities.keyboard import Keyboard, KeyboardButton, KeyboardRow
 from src.domain.entities.user_session import UserSession
 from src.domain.value_objects.button import BaseButton, ButtonType
+from src.domain.value_objects.keyboard import Keyboard, KeyboardButton, KeyboardRow
 from src.domain.value_objects.node import NodeName
+
+
+def find_target_button_in_content(content: Content, target_label: str) -> KeyboardButton | None:
+    content = content.posts if isinstance(content, PostGroup) else [content]
+    for post in content:
+        for button in post.keyboard.get_buttons():
+            if button.text == target_label:
+                return button
+    return None
 
 
 def add_automatic_buttons(node: Content, session: UserSession) -> Content:
     """
     Add automatic Back and Main menu buttons to a MenuNode based on its flags and session state.
-    Returns the node unchanged if it's not a MenuNode.
 
     Button logic:
     - Back button added when flags.build=True and flags.is_back=True and len(session.history) > 1
@@ -17,14 +25,9 @@ def add_automatic_buttons(node: Content, session: UserSession) -> Content:
     - Back button target = session.history[-2] (previous node)
     - Main menu button target = NodeName.ROOT
     """
-    if isinstance(node, PostGroup):
-        content = node.posts
-    else:
-        content = [node]
-
+    content = node.posts if isinstance(node, PostGroup) else [node]
     for post in content:
         post.keyboard = _form_keyboard(post, session)
-
     return node
 
 

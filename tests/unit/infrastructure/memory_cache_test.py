@@ -5,17 +5,15 @@ from pathlib import Path
 import pytest
 
 from src.config import settings
+from src.domain.exceptions import CacheExpiredError, CacheMissError
+from src.domain.value_objects.cache import CacheKey, CacheMediaType, CacheRecord
 from src.domain.value_objects.network import Network
-from src.infrastructure.file_cache.exceptions import MediaCacheExpired, MediaCacheMiss
-from src.infrastructure.file_cache.in_memory import InMemoryMediaCache
-from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
-from src.infrastructure.file_cache.value_objects.cache_media_type import CacheMediaType
-from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
+from src.infrastructure.file_cache import MemoryMediaCache
 
 
 @pytest.fixture
-def cache() -> InMemoryMediaCache:
-    return InMemoryMediaCache()
+def cache() -> MemoryMediaCache:
+    return MemoryMediaCache()
 
 
 @pytest.fixture
@@ -50,10 +48,10 @@ def make_cache_record(temp_file):
 
 @pytest.mark.asyncio
 async def test_get_instance():
-    instance = await InMemoryMediaCache.get_instance()
+    instance = await MemoryMediaCache.get_instance()
     assert instance._instance is not None
 
-    same_instance = await InMemoryMediaCache.get_instance()
+    same_instance = await MemoryMediaCache.get_instance()
     assert instance is same_instance
 
 
@@ -80,7 +78,7 @@ async def test_duplicate_add(cache, cache_key, make_cache_record):
 
 @pytest.mark.asyncio
 async def test_get_miss_raises(cache, cache_key):
-    with pytest.raises(MediaCacheMiss):
+    with pytest.raises(CacheMissError):
         await cache.get(cache_key)
 
 
@@ -92,7 +90,7 @@ async def test_expiration(cache, cache_key, make_cache_record):
     assert fetched.file_id == "exp"
     await sleep(1.1)
 
-    with pytest.raises(MediaCacheExpired):
+    with pytest.raises(CacheExpiredError):
         await cache.get(cache_key)
 
 
@@ -133,7 +131,7 @@ async def test_remove_and_all_entries(cache, make_cache_record, make_cache_key):
     entries = await cache.all_entries()
     assert len(entries) == 1
     assert first_key not in entries
-    with pytest.raises(MediaCacheMiss):
+    with pytest.raises(CacheMissError):
         await cache.get(first_key)
 
 
@@ -162,7 +160,7 @@ async def test_get_many(cache, make_cache_key, make_cache_record):
 @pytest.mark.asyncio
 async def test_get_many_miss_raises(cache, make_cache_key):
     cache_keys = (make_cache_key(key="temp1"), make_cache_key(key="temp2"))
-    with pytest.raises(MediaCacheMiss):
+    with pytest.raises(CacheMissError):
         await cache.get_many(cache_keys)
 
 
@@ -177,5 +175,5 @@ async def test_get_many_with_expiration(cache, make_cache_key, make_cache_record
     assert len(fetched) == 2
 
     await sleep(1.1)
-    with pytest.raises(MediaCacheExpired):
+    with pytest.raises(CacheExpiredError):
         await cache.get_many(cache_keys)

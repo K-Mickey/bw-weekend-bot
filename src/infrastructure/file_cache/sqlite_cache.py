@@ -5,24 +5,11 @@ from typing import Iterable, Self
 import aiosqlite
 from aiosqlite import Connection
 
+from src.domain.exceptions import CacheExpiredError, CacheMissError
+from src.domain.ports import MediaCache
+from src.domain.value_objects.cache import CacheKey, CacheMediaType, CacheRecord
 from src.domain.value_objects.network import Network
-from src.infrastructure.file_cache.base import (
-    CacheRecord,
-    MediaCache,
-)
-from src.infrastructure.file_cache.exceptions import MediaCacheExpired, MediaCacheMiss
-from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
-from src.infrastructure.file_cache.value_objects.cache_media_type import CacheMediaType
-
-
-class SQLiteCacheError(Exception):
-    pass
-
-
-class SQLiteRuntimeError(SQLiteCacheError):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.message = "Database connection not initialized. Call get_instance first."
+from src.infrastructure.exceptions import LostConnectionError
 
 
 class SQLiteMediaCache(MediaCache):
@@ -65,7 +52,7 @@ class SQLiteMediaCache(MediaCache):
 
     async def get(self, cache_key: CacheKey) -> CacheRecord:
         if not self._connection:
-            raise SQLiteRuntimeError
+            raise LostConnectionError()
 
         async with self._connection.execute(
             """
@@ -78,7 +65,7 @@ class SQLiteMediaCache(MediaCache):
             row = await cursor.fetchone()
 
         if row is None:
-            raise MediaCacheMiss(cache_key)
+            raise CacheMissError(cache_key)
 
         file_id, mtime, expires, updated_at = row
         updated_at_dt = datetime.fromtimestamp(updated_at)
@@ -90,18 +77,18 @@ class SQLiteMediaCache(MediaCache):
         )
 
         if not self.check_expiration(record):
-            raise MediaCacheExpired(cache_key)
+            raise CacheExpiredError(cache_key)
 
         return record
 
     async def get_many(self, cache_keys: Iterable[CacheKey]) -> dict[CacheKey, CacheRecord]:
         if not self._connection:
-            raise SQLiteRuntimeError
+            raise LostConnectionError()
         return {key: await self.get(key) for key in cache_keys}
 
     async def add(self, cache_key: CacheKey, cache_record: CacheRecord) -> None:
         if not self._connection:
-            raise SQLiteRuntimeError
+            raise LostConnectionError()
 
         updated_at = datetime.now()
         cache_record = cache_record._replace(updated_at=updated_at)
@@ -126,7 +113,7 @@ class SQLiteMediaCache(MediaCache):
 
     async def remove(self, cache_key: CacheKey) -> None:
         if not self._connection:
-            raise SQLiteRuntimeError
+            raise LostConnectionError()
 
         await self._connection.execute(
             """
@@ -139,7 +126,7 @@ class SQLiteMediaCache(MediaCache):
 
     async def all_entries(self) -> dict[CacheKey, CacheRecord]:
         if not self._connection:
-            raise SQLiteRuntimeError
+            raise LostConnectionError()
 
         async with self._connection.execute(
             """

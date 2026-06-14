@@ -1,7 +1,7 @@
 import pytest
 
-from src.domain.entities.media import Photo, Text, Video
 from src.domain.factories import media_factory
+from src.domain.value_objects.media import Photo, Text, Video
 
 
 def test_media_factory_photo(get_test_data):

@@ -12,21 +12,20 @@ from aiogram.types import (
 from aiogram.utils.media_group import MediaGroupBuilder
 
 from src.application.services import MessageSender
-from src.domain.entities import MediaGroup
-from src.domain.entities.keyboard import Keyboard
-from src.domain.entities.media import Photo, Text, Video
+from src.domain.exceptions import CacheError
+from src.domain.ports import MediaCache
+from src.domain.ports.content_repository import ContentRepository
+from src.domain.value_objects.cache import CacheKey, CacheRecord
+from src.domain.value_objects.keyboard import Keyboard
+from src.domain.value_objects.media import MediaGroup, Photo, Text, Video
 from src.domain.value_objects.network import Network
-from src.infrastructure.file_cache import MediaCache
-from src.infrastructure.file_cache.exceptions import MediaCacheError
-from src.infrastructure.file_cache.value_objects.cache_key import CacheKey
-from src.infrastructure.file_cache.value_objects.cache_record import CacheRecord
-from src.infrastructure.file_provider import get_file_path
 
 logger = logging.getLogger(__name__)
 
 
 class TelegramMessageSender(MessageSender):
-    def __init__(self, cache: MediaCache):
+    def __init__(self, cache: MediaCache, content_repository: ContentRepository):
+        super().__init__(content_repository)
         self.cache = cache
 
     async def send_text(self, message: Message, text: Text, reply_markup: Keyboard) -> None:
@@ -50,11 +49,11 @@ class TelegramMessageSender(MessageSender):
         except TelegramForbiddenError:
             logger.warning(f"User {message.from_user.id} blocked the bot.")
 
-        except (TelegramBadRequest, MediaCacheError) as e:
+        except (TelegramBadRequest, CacheError) as e:
             logger.debug(f"Failed to send photo {photo.local_path}: {e}")
             await self.cache.remove(cache_key)
 
-            file_path = get_file_path(photo)
+            file_path = self.content_repository.get_media_path(photo)
             file = FSInputFile(file_path)
             sent_message = await message.answer_photo(
                 file,
@@ -81,11 +80,11 @@ class TelegramMessageSender(MessageSender):
         except TelegramForbiddenError:
             logger.warning(f"User {message.from_user.id} blocked the bot.")
 
-        except (TelegramBadRequest, MediaCacheError) as e:
+        except (TelegramBadRequest, CacheError) as e:
             logger.debug(f"Failed to send video {video.local_path}: {e}")
             await self.cache.remove(cache_key)
 
-            file_path = get_file_path(video)
+            file_path = self.content_repository.get_media_path(video)
             file = FSInputFile(file_path)
             sent_message = await message.answer_video(
                 file,
@@ -109,12 +108,12 @@ class TelegramMessageSender(MessageSender):
         except TelegramForbiddenError:
             logger.warning(f"User {message.from_user.id} blocked the bot.")
 
-        except (TelegramBadRequest, MediaCacheError) as e:
+        except (TelegramBadRequest, CacheError) as e:
             logger.debug(f"Failed to send media group {media_group}: {e}")
             for cache_key in cache_keys:
                 await self.cache.remove(cache_key)
 
-            file_paths = tuple(get_file_path(media) for media in media_group)
+            file_paths = tuple(self.content_repository.get_media_path(media) for media in media_group)
             files = (FSInputFile(file_path) for file_path in file_paths)
 
             album = await self._build_album(media_group, files)

@@ -1,8 +1,9 @@
-from typing import Iterator
+from typing import Iterator, Self
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from src.domain.value_objects.button import ButtonType
+from ..exceptions import NotUniqueButtonsError
+from .button import ButtonType
 
 
 class KeyboardButton(BaseModel):
@@ -24,7 +25,7 @@ class KeyboardRow(BaseModel):
     def __iter__(self) -> Iterator[KeyboardButton]:
         return iter(self.buttons)
 
-    def __getitem__(self, index) -> KeyboardButton:
+    def __getitem__(self, index: int) -> KeyboardButton:
         return self.buttons[index]
 
     def __len__(self) -> int:
@@ -43,10 +44,10 @@ class Keyboard(BaseModel):
         return values
 
     @model_validator(mode="after")
-    def check_unique_buttons(self) -> list[KeyboardRow]:
+    def check_unique_buttons(self) -> Self:
         buttons = [button.text for row in self.rows for button in row]
         if len(buttons) != len(set(buttons)):
-            raise ValueError("Duplicate buttons in keyboard")
+            raise NotUniqueButtonsError()
         return self
 
     def __iter__(self) -> Iterator[KeyboardRow]:
@@ -55,7 +56,7 @@ class Keyboard(BaseModel):
     def __len__(self):
         return len(self.rows)
 
-    def __getitem__(self, index) -> KeyboardRow:
+    def __getitem__(self, index: int) -> KeyboardRow:
         return self.rows[index]
 
     def add_row(self, row: KeyboardRow):

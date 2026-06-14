@@ -2,11 +2,11 @@ import asyncio
 from typing import Self
 
 from src.domain.entities.user_session import UserSession
+from src.domain.ports import StateStore
 from src.domain.value_objects.user_key import UserKey
-from src.infrastructure.state_store.base import StateStore
 
 
-class InMemoryStateStore(StateStore):
+class MemoryStateStore(StateStore):
     _instance: Self | None = None
     _lock = asyncio.Lock()
 

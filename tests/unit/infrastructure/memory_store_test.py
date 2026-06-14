@@ -1,17 +1,17 @@
 import pytest
 
 from src.domain.entities.user_session import UserSession
+from src.domain.ports import StateStore
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.user_key import UserKey
-from src.infrastructure.state_store.base import StateStore
-from src.infrastructure.state_store.memory_store import InMemoryStateStore
+from src.infrastructure.state_store.memory_store import MemoryStateStore
 
 ROOT_NODE = "root"
 
 
 @pytest.fixture
 def state_store():
-    return InMemoryStateStore()
+    return MemoryStateStore()
 
 
 def test_state_store_is_abstract():
@@ -22,7 +22,7 @@ def test_state_store_is_abstract():
 @pytest.mark.asyncio
 async def test_in_memory_state_store_can_be_instantiated(state_store):
     assert isinstance(state_store, StateStore)
-    assert isinstance(state_store, InMemoryStateStore)
+    assert isinstance(state_store, MemoryStateStore)
 
 
 @pytest.mark.asyncio
