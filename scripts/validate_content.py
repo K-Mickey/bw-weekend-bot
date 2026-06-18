@@ -6,34 +6,33 @@ from typing import Iterable, NamedTuple, Sequence
 
 from src.config import settings
 from src.domain.aggregates import Content, Post
-from src.domain.entities import MediaGroup
-from src.domain.entities.media import MediaType, Photo, Video
+from src.domain.exceptions import ContentNotFoundError, MediaNotFoundError
 from src.domain.value_objects.button import ButtonType
+from src.domain.value_objects.media import MediaGroup, MediaType, Photo, Video
 from src.domain.value_objects.node import NodeName
-from src.infrastructure.content_repository import ContentRepository
-from src.infrastructure.file_provider import FileNotFound, get_file_path, get_text_file
+from src.infrastructure.content_repository import LocalContentRepository
 
 
 class Link(NamedTuple):
-    file_name: str
+    file_name: str | Path
     target: str
 
 
 @dataclass
 class ValidStatistic:
-    files: set[str] = field(default_factory=set)
-    button_links: set[str] = field(default_factory=set)
+    files: set[Path] = field(default_factory=set)
+    button_links: set[Path] = field(default_factory=set)
     media_links: set[MediaType] = field(default_factory=set)
 
-    invalid_files: list[str] = field(default_factory=list)
+    invalid_files: list[str | Path] = field(default_factory=list)
     invalid_button_links: list[Link] = field(default_factory=list)
     invalid_media_links: list[Link] = field(default_factory=list)
 
     def add_file(self, file_name: str | Path):
-        self.files.add(file_name)
+        self.files.add(Path(file_name))
 
     def add_button_link(self, file_name: str | Path):
-        self.button_links.add(file_name)
+        self.button_links.add(Path(file_name))
 
     def add_media_link(self, file: MediaType):
         self.media_links.add(file)
@@ -57,6 +56,12 @@ class ValidStatistic:
         all_photos: Sequence[Path],
         all_videos: Sequence[Path],
     ) -> str:
+        all_yaml_files = {file.relative_to(settings.content_data_dir).with_suffix("") for file in all_yaml_files}
+        all_photos = {file.relative_to(settings.content_photo_dir) for file in all_photos}
+        all_videos = {file.relative_to(settings.content_video_dir) for file in all_videos}
+
+        photo_paths = {Path(p.local_path) for p in self.media_links if isinstance(p, Photo)}
+        video_paths = {Path(v.local_path) for v in self.media_links if isinstance(v, Video)}
         statistic = [
             "-" * 20,
             "Amount of files in the directory:",
@@ -66,8 +71,8 @@ class ValidStatistic:
             "",
             "The bot will use of them:",
             f"- {len(self.button_links)} files through buttons + some required files(main, help, error)",
-            f"- {len(set(media.local_path for media in self.media_links if isinstance(media, Photo)))} photos",
-            f"- {len(set(media.local_path for media in self.media_links if isinstance(media, Video)))} videos",
+            f"- {len(photo_paths)} photos",
+            f"- {len(video_paths)} videos",
             "",
             "Invalid files:",
             f"- {len(self.invalid_files)} invalid files(syntax errors)",
@@ -84,20 +89,11 @@ class ValidStatistic:
             *[f"- {file} -> {media}" for file, media in self.invalid_media_links],
             "-" * 20,
             "Unused files:",
-            *[
-                f"- {file.relative_to(settings.content_data_dir)}"
-                for file in set(all_yaml_files) - set(get_text_file(file) for file in self.button_links)
-            ],
+            *[f"- {file}" for file in all_yaml_files - self.button_links],
             "Unused photos:",
-            *[
-                f"- {file.relative_to(settings.content_photo_dir)}"
-                for file in set(all_photos) - set(get_file_path(media) for media in self.media_links)
-            ],
+            *[f"- {file}" for file in all_photos - photo_paths],
             "Unused videos:",
-            *[
-                f"- {file.relative_to(settings.content_video_dir)}"
-                for file in set(all_videos) - set(get_file_path(media) for media in self.media_links)
-            ],
+            *[f"- {file}" for file in all_videos - video_paths],
             "-" * 20,
         ]
 
@@ -106,7 +102,7 @@ class ValidStatistic:
 
 class Checker:
     def __init__(self):
-        self.repository = ContentRepository()
+        self.repository = LocalContentRepository()
         self.statistic: ValidStatistic | None = None
 
     def check_content(self, files: Iterable[str]) -> ValidStatistic:
@@ -122,30 +118,29 @@ class Checker:
 
             visited.add(file_name)
 
-            content = self.repository.get_node(file_name)
-            self._analyze_content(content, file_name)
+            self.statistic.add_file(file_name)
 
-            if not content:
-                continue
+            try:
+                content = self.repository.get_content(file_name)
+            except:  # noqa: E722
+                self.statistic.add_invalid_file(file_name)
+            else:
+                self._analyze_content(content, file_name)
 
-            posts = [content] if isinstance(content, Post) else content.posts
-            for post in posts:
-                buttons = filter(lambda x: x.type == ButtonType.DEFAULT, post.keyboard.get_buttons())
-                visit_line += [button.target for button in buttons]
+                posts = [content] if isinstance(content, Post) else content.posts
+                for post in posts:
+                    buttons = filter(lambda x: x.type == ButtonType.DEFAULT, post.keyboard.get_buttons())
+                    visit_line += [button.target for button in buttons]
 
         return self.statistic
 
     def _analyze_content(self, content: Content, file_name: str | Path):
-        self.statistic.add_file(file_name)
-        if not content:
-            self.statistic.add_invalid_file(file_name)
-        else:
-            invalid_media = self._check_content_media_links(content)
-            for media in invalid_media:
-                self.statistic.add_invalid_media(file_name, media)
-            invalid_buttons = self._check_content_button_links(content)
-            for button in invalid_buttons:
-                self.statistic.add_invalid_button(file_name, button)
+        invalid_media = self._check_content_media_links(content)
+        for media in invalid_media:
+            self.statistic.add_invalid_media(file_name, media)
+        invalid_buttons = self._check_content_button_links(content)
+        for button in invalid_buttons:
+            self.statistic.add_invalid_button(file_name, button)
 
     def _check_content_media_links(self, content: Content) -> list[str]:
         invalid_media_files = []
@@ -156,8 +151,8 @@ class Checker:
                 if isinstance(media_item, MediaType):
                     self.statistic.add_media_link(media_item)
                     try:
-                        get_file_path(media_item)
-                    except FileNotFound:
+                        self.repository.get_media_path(media_item)
+                    except MediaNotFoundError:
                         invalid_media_files.append(media_item)
 
         return invalid_media_files
@@ -170,7 +165,9 @@ class Checker:
             for button in buttons:
                 target = button.target
                 self.statistic.add_button_link(button.target)
-                if not self.repository.get_node(target):
+                try:
+                    self.repository.get_content_path(target)
+                except ContentNotFoundError:
                     invalid_button_links.append(target)
         return invalid_button_links
 
@@ -194,10 +191,10 @@ class Checker:
 
 
 def check_base_file_exist() -> list[str]:
-    repository = ContentRepository()
+    repository = LocalContentRepository()
     not_exist_files = []
     for file in NodeName:
-        if not repository.get_node(file):
+        if not repository.get_content_path(file):
             not_exist_files.append(file)
 
     return not_exist_files
