@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 import re
-from typing import Iterator
+from typing import Iterator, Literal, TypeAlias
 
 from pydantic import BaseModel, Field, field_validator
 
 from src.domain.exceptions import TooLongFieldError, VideoValidationError
 
 
-class MediaContent(BaseModel): ...
-
-
-class MediaGroup(MediaContent):
+class MediaGroup(BaseModel):
     items: tuple[MediaType, ...] = Field(...)
 
     def __iter__(self) -> Iterator[MediaType]:
@@ -27,13 +24,12 @@ class MediaGroup(MediaContent):
         return self.items[index]
 
 
-class DataItem(MediaContent):
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.model_dump()})"
-
-
-class Text(DataItem):
+class Text(BaseModel):
+    type: Literal["text"] = "text"
     text: str = Field(...)
+
+    def __repr__(self):
+        return f"Text({self.text})"
 
     @field_validator("text")
     @classmethod
@@ -43,9 +39,13 @@ class Text(DataItem):
         return v
 
 
-class MediaType(DataItem):
+class Photo(BaseModel):
+    type: Literal["photo"] = "photo"
     local_path: str = Field(...)
     description: str | None = None
+
+    def __repr__(self):
+        return f"Photo({self.local_path}, {self.description})"
 
     def __hash__(self):
         return hash((self.local_path, self.description))
@@ -58,11 +58,24 @@ class MediaType(DataItem):
         return v
 
 
-class Photo(MediaType): ...
-
-
-class Video(MediaType):
+class Video(BaseModel):
+    type: Literal["video"] = "video"
     vk_url: str = Field(default="")
+    local_path: str = Field(...)
+    description: str | None = None
+
+    def __repr__(self):
+        return f"Video({self.local_path}, {self.description})"
+
+    def __hash__(self):
+        return hash((self.local_path, self.description))
+
+    @field_validator("description")
+    @classmethod
+    def check_description_length(cls, v: str | None) -> str | None:
+        if v is not None and len(v) > 1024:
+            raise TooLongFieldError("Description length must not exceed 1024 characters")
+        return v
 
     @field_validator("vk_url")
     @classmethod
@@ -83,3 +96,6 @@ class Video(MediaType):
             return match.group(0)
         else:
             raise VideoValidationError("Не удалось извлечь ID видео из ссылки")
+
+
+MediaType: TypeAlias = Photo | Video

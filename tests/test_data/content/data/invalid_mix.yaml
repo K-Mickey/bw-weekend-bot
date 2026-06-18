@@ -1,4 +1,5 @@
 id: menu_bad
+type: post_group
 posts:
   - id: post_bad
     media:

@@ -1,9 +1,10 @@
 id: main
+type: post
 media:
-  - type: photo
-    local_path: main.jpg
-    description: >
-      Привет, дорогой друг!👋
+  type: photo
+  local_path: main.jpg
+  description: >
+    Привет, дорогой друг!👋
 keyboard:
   - - text: "Цены"
       target: prices

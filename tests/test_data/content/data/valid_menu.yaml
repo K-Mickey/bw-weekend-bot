@@ -1,6 +1,8 @@
 id: menu_ok
+type: post_group
 posts:
   - id: post_ok
+    type: post
     media:
       - type: text
         text: Hello world

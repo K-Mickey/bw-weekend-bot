@@ -1,9 +1,11 @@
 id: menu_full
+type: post_group
 posts:
   - id: post_text
+    type: post
     media:
-      - type: text
-        text: Hello world
+      type: text
+      text: Hello world
     keyboard:
       - - text: "Button 1"
           target: button_1
@@ -14,6 +16,7 @@ posts:
       is_main: false
 
   - id: post_media
+    type: post
     media:
       - type: photo
         local_path: some_photo.jpg

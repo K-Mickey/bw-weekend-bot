@@ -1,7 +1,8 @@
 id: post
+type: post
 media:
-  - type: text
-    text: Hello world
+  type: text
+  text: Hello world
 keyboard:
   - - text: "Settings"
       target: settings

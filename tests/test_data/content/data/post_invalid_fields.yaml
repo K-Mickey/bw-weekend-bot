@@ -1,4 +1,5 @@
 id: post
+type: posts
 medias:
   - type: photo
     local_path: some_photo.jpg

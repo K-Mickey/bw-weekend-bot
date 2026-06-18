@@ -1,22 +1,11 @@
 from typing import Mapping
 
-from .aggregates import Post, PostGroup
-from .exceptions import NotSupportedTypeError
-from .value_objects.media import DataItem, Photo, Text, Video
+from .aggregates import Content, Post, PostGroup
+from .value_objects.media import Photo, Text, Video
 from .value_objects.node import NodeKind
 
 
-def content_factory(raw: dict):
-    match raw:
-        case {"posts": _}:
-            return PostGroup(**raw)
-        case {"media": _}:
-            return Post(**raw)
-        case _:
-            raise NotSupportedTypeError(str(raw))
-
-
-def media_factory(raw: Mapping) -> DataItem:
+def content_factory(raw: Mapping) -> Content | Text | Photo | Video:
     kind = NodeKind(raw["type"])
     match kind:
         case NodeKind.PHOTO:
@@ -25,3 +14,7 @@ def media_factory(raw: Mapping) -> DataItem:
             return Video(**raw)
         case NodeKind.TEXT:
             return Text(**raw)
+        case NodeKind.POST:
+            return Post(**raw)
+        case NodeKind.POST_GROUP:
+            return PostGroup(**raw)

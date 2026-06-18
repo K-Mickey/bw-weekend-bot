@@ -1,10 +1,10 @@
-from typing import Mapping
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from src.domain.exceptions import NotSupportedKeyboardError
 from src.domain.value_objects.keyboard import Keyboard
-from src.domain.value_objects.media import DataItem, MediaContent, MediaGroup
+from src.domain.value_objects.media import MediaGroup, Photo, Text, Video
 from src.domain.value_objects.post_flag import PostFlag
 
 
@@ -13,24 +13,17 @@ class Content(BaseModel):
 
 
 class Post(Content):
-    media: MediaContent = Field(...)
+    type: Literal["post"] = "post"
+    media: Text | Photo | Video | MediaGroup = Field(...)
     keyboard: Keyboard = Field(default_factory=Keyboard)
     flags: PostFlag = Field(default_factory=PostFlag)
 
     @field_validator("media", mode="before")
     @classmethod
-    def media_validator(cls, values: list[Mapping] | DataItem):
-        from src.domain.factories import media_factory
-
-        if isinstance(values, DataItem):
-            return values
-
-        is_media_group = len(values) > 1
-        if not is_media_group:
-            return media_factory(values[0])
-
-        parsed_items = tuple(media_factory(item) for item in values)
-        return MediaGroup(items=parsed_items)
+    def media_validator(cls, values):
+        if isinstance(values, list):
+            return MediaGroup(items=tuple(values))
+        return values
 
     @model_validator(mode="after")
     def check_keyboard(self):
@@ -40,6 +33,7 @@ class Post(Content):
 
 
 class PostGroup(Content):
+    type: Literal["post_group"] = "post_group"
     posts: list[Post] = Field(...)
 
     def __get_item__(self, item: int) -> Post:

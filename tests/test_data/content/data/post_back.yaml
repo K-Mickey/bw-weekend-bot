@@ -1,4 +1,5 @@
 id: post
+type: post
 media:
   - type: text
     text: Hello world

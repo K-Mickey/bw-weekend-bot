@@ -11,3 +11,5 @@ class NodeKind(StrEnum):
     PHOTO = "photo"
     VIDEO = "video"
     TEXT = "text"
+    POST = "post"
+    POST_GROUP = "post_group"

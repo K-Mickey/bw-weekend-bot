@@ -1,9 +1,11 @@
 id: menu_ok
+type: post_group
 posts:
   - id: post_ok
+    type: post
     media:
-      - type: text
-        text: Hello world
+      type: text
+      text: Hello world
     keyboard:
       - - text: settings
           target: menu_settings

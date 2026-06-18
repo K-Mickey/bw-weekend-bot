@@ -1,4 +1,5 @@
 id: contacts
+type: post
 media:
   - type: text
     text: Contacts
