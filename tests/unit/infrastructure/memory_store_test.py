@@ -39,9 +39,9 @@ async def test_set_history(state_store, user_key):
 
 @pytest.mark.asyncio
 async def test_get_current_state(state_store, user_key):
-    await state_store.set_history(user_key, ("root",))
+    await state_store.set_history(user_key, ("root", "node1"))
     state = await state_store.get_current_state(user_key)
-    assert state == "root"
+    assert state == "node1"
 
 
 @pytest.mark.asyncio

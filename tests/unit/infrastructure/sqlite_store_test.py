@@ -42,9 +42,9 @@ async def test_set_history(sqlite_store, user_key):
 
 @pytest.mark.asyncio
 async def test_get_current_state(sqlite_store, user_key):
-    await sqlite_store.set_history(user_key, ("root",))
+    await sqlite_store.set_history(user_key, ("root", "node1"))
     state = await sqlite_store.get_current_state(user_key)
-    assert state == "root"
+    assert state == "node1"
 
 
 @pytest.mark.asyncio

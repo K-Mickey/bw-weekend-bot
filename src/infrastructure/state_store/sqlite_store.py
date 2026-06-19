@@ -27,7 +27,7 @@ class SQLiteStateStore(StateStore):
                 SELECT name
                 FROM session_history
                 WHERE session_id = ?
-                ORDER BY created_at
+                ORDER BY created_at DESC
                 LIMIT 1
                 """,
                 (session_id,),
