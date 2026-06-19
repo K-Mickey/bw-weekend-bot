@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from vkbottle import Keyboard as VKKeyboard
-from vkbottle.bot import Message
 
 from src.application.services import MessageSender
 from src.application.services.vk_message_sender import VKMessageSender
@@ -11,7 +10,7 @@ from src.domain.exceptions import CacheError
 from src.domain.value_objects.button import BaseButton, ButtonType
 from src.domain.value_objects.cache import CacheKey, CacheRecord
 from src.domain.value_objects.keyboard import Keyboard, KeyboardButton, KeyboardRow
-from src.domain.value_objects.media import MediaGroup, Photo, Text, Video
+from src.domain.value_objects.media import Text
 from src.domain.value_objects.network import Network
 from src.domain.value_objects.node import NodeName
 from src.infrastructure.file_cache import MemoryMediaCache
@@ -34,34 +33,6 @@ def message_sender(content_repository) -> MessageSender:
     uploader.upload = AsyncMock(return_value="new_file_id")
     sender.photo_uploader = uploader
     return sender
-
-
-@pytest.fixture
-def message() -> Message:
-    message = Mock(spec=Message)
-    message.peer_id = 123456789
-    message.answer = AsyncMock()
-    return message
-
-
-@pytest.fixture
-def photo() -> Photo:
-    return Photo(local_path="exist.jpg", description="photo description")
-
-
-@pytest.fixture
-def video() -> Video:
-    video = Video(
-        local_path="exist.mp4",
-        description="video description",
-        vk_url="https://vk.com/video-1234_1234",
-    )
-    return video
-
-
-@pytest.fixture
-def media_group(photo, video) -> MediaGroup:
-    return MediaGroup(items=(photo, video))
 
 
 @pytest.fixture
@@ -88,22 +59,22 @@ def test_build_reply_markup(message_sender, reply_markup):
 
 
 @pytest.mark.asyncio
-async def test_send_text(message_sender, message):
+async def test_send_text(message_sender, vk_message):
     text = Text(text="test")
-    await message_sender.send_text(message, text, Keyboard())
-    message.answer.assert_called_once_with(text.text, keyboard=AnyVKKeyboard())
+    await message_sender.send_text(vk_message, text, Keyboard())
+    vk_message.answer.assert_called_once_with(text.text, keyboard=AnyVKKeyboard())
 
 
 @pytest.mark.asyncio
-async def test_send_photo(message_sender, message, photo):
+async def test_send_photo(message_sender, vk_message, photo):
     cache_key = CacheKey.create(photo, Network.VK)
 
     with pytest.raises(CacheError):
         await message_sender.cache.get(cache_key)
 
-    await message_sender.send_photo(message, photo, Keyboard())
+    await message_sender.send_photo(vk_message, photo, Keyboard())
 
-    message.answer.assert_called_once_with(
+    vk_message.answer.assert_called_once_with(
         attachment="new_file_id",
         message=photo.description,
         keyboard=AnyVKKeyboard(),
@@ -114,19 +85,19 @@ async def test_send_photo(message_sender, message, photo):
 
 
 @pytest.mark.asyncio
-async def test_send_photo_with_cache(message_sender, message, photo, content_repository):
+async def test_send_photo_with_cache(message_sender, vk_message, photo, content_repository):
     cache_key = CacheKey.create(photo, Network.VK)
     file_path = content_repository.get_media_path(photo)
     cache_record = CacheRecord.from_file(file_id="1234", file_path=file_path)
     await message_sender.cache.add(cache_key, cache_record)
 
-    await message_sender.send_photo(message, photo, Keyboard())
-    message.answer.assert_called_once_with(attachment="1234", message=photo.description, keyboard=AnyVKKeyboard())
+    await message_sender.send_photo(vk_message, photo, Keyboard())
+    vk_message.answer.assert_called_once_with(attachment="1234", message=photo.description, keyboard=AnyVKKeyboard())
     message_sender.photo_uploader.upload.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_send_photo_expired(message_sender, message, photo, content_repository):
+async def test_send_photo_expired(message_sender, vk_message, photo, content_repository):
     cache_key = CacheKey.create(photo, Network.VK)
     file_path = content_repository.get_media_path(photo)
     cache_record = CacheRecord.from_file(file_id="1234", file_path=file_path, expires=1)
@@ -134,8 +105,8 @@ async def test_send_photo_expired(message_sender, message, photo, content_reposi
 
     await sleep(1.1)
 
-    await message_sender.send_photo(message, photo, Keyboard())
-    message.answer.assert_called_once_with(
+    await message_sender.send_photo(vk_message, photo, Keyboard())
+    vk_message.answer.assert_called_once_with(
         attachment="new_file_id",
         message=photo.description,
         keyboard=AnyVKKeyboard(),
@@ -147,23 +118,23 @@ async def test_send_photo_expired(message_sender, message, photo, content_reposi
 
 
 @pytest.mark.asyncio
-async def test_send_video(message_sender, message, video):
-    await message_sender.send_video(message, video, Keyboard())
-    message.answer.assert_called_once_with(
+async def test_send_video(message_sender, vk_message, video):
+    await message_sender.send_video(vk_message, video, Keyboard())
+    vk_message.answer.assert_called_once_with(
         attachment=video.vk_video_id, message=video.description, keyboard=AnyVKKeyboard()
     )
 
 
 @pytest.mark.asyncio
-async def test_send_media_group(message_sender, message, media_group, photo, video):
+async def test_send_media_group(message_sender, vk_message, media_group, photo, video):
     cache_key = CacheKey.create(photo, Network.VK)
     with pytest.raises(CacheError):
         await message_sender.cache.get_many(cache_key)
 
-    await message_sender.send_media_group(message, media_group)
+    await message_sender.send_media_group(vk_message, media_group)
 
     expected_attachment = f"new_file_id,{video.vk_video_id}"
-    message.answer.assert_called_once_with(attachment=expected_attachment)
+    vk_message.answer.assert_called_once_with(attachment=expected_attachment)
 
     message_sender.photo_uploader.upload.assert_called_once()
     cache_record = await message_sender.cache.get(cache_key)
@@ -171,16 +142,16 @@ async def test_send_media_group(message_sender, message, media_group, photo, vid
 
 
 @pytest.mark.asyncio
-async def test_send_media_group_with_cache(message_sender, message, media_group, photo, video, content_repository):
+async def test_send_media_group_with_cache(message_sender, vk_message, media_group, photo, video, content_repository):
     cache_key = CacheKey.create(photo, Network.VK)
     file_path = content_repository.get_media_path(photo)
     cache_record = CacheRecord.from_file(file_id="1234", file_path=file_path)
     await message_sender.cache.add(cache_key, cache_record)
 
-    await message_sender.send_media_group(message, media_group)
+    await message_sender.send_media_group(vk_message, media_group)
 
     expected_attachment = f"{cache_record.file_id},{video.vk_video_id}"
-    message.answer.assert_called_once_with(attachment=expected_attachment)
+    vk_message.answer.assert_called_once_with(attachment=expected_attachment)
     message_sender.photo_uploader.upload.assert_not_called()
 
     current_record = await message_sender.cache.get(cache_key)

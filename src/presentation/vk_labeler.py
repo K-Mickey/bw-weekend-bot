@@ -18,7 +18,7 @@ async def cmd_start(message: Message, message_sender: MessageSender, navigation_
     user_id = message.from_id
 
     try:
-        content = await navigation_service.start_conversation(Network.TELEGRAM, user_id)
+        content = await navigation_service.start_conversation(Network.VK, user_id)
         await message_sender.send_content(message, content)
 
     except Exception:
