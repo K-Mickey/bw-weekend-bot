@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from datetime import time
+from datetime import datetime
 from typing import Iterable, Self
 
 import aiosqlite
@@ -51,7 +51,8 @@ class SQLiteStateStore(StateStore):
                 """,
                 (session_id,),
             ) as cursor:
-                return tuple(row[0] async for row in cursor)
+                rows = await cursor.fetchall()
+                return tuple(row[0] for row in rows)
 
         return ()
 
@@ -61,9 +62,9 @@ class SQLiteStateStore(StateStore):
 
         session_id = await self._get_session_id(user_key)
         if not session_id:
-            session_id = self._create_user(user_key)
+            session_id = await self._create_user(user_key)
 
-        sessions = [(session_id, name, time()) for name in history]
+        sessions = [(session_id, name, self._get_time()) for name in history]
         await self._connection.executemany(
             """
             INSERT INTO session_history (session_id, name, created_at)
@@ -80,9 +81,9 @@ class SQLiteStateStore(StateStore):
 
         session_id = await self._get_session_id(user_key)
         if not session_id:
-            session_id = self._create_user(user_key)
+            session_id = await self._create_user(user_key)
 
-        current_time = time()
+        current_time = self._get_time()
         await self._connection.execute(
             """
             INSERT INTO session_history (session_id, name, created_at)
@@ -202,3 +203,7 @@ class SQLiteStateStore(StateStore):
     @staticmethod
     def _create_user_id() -> str:
         return str(uuid.uuid4())
+
+    @staticmethod
+    def _get_time() -> float:
+        return datetime.now().timestamp()
