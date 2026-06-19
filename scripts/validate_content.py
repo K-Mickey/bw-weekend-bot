@@ -104,11 +104,12 @@ class Checker:
     def __init__(self):
         self.repository = LocalContentRepository()
         self.statistic: ValidStatistic | None = None
+        self.ignored_files = {".gitkeep"}
 
     def check_content(self, files: Iterable[str]) -> ValidStatistic:
         self.statistic = ValidStatistic()
 
-        visit_line = [file for file in files]
+        visit_line = list(files)
         visited = set()
 
         while visit_line:
@@ -122,7 +123,7 @@ class Checker:
 
             try:
                 content = self.repository.get_content(file_name)
-            except:  # noqa: E722
+            except Exception:
                 self.statistic.add_invalid_file(file_name)
             else:
                 self._analyze_content(content, file_name)
@@ -171,23 +172,20 @@ class Checker:
                     invalid_button_links.append(target)
         return invalid_button_links
 
-    @staticmethod
-    def get_all_files():
+    def get_all_files(self):
         data_dir = settings.content_data_dir
         files = sorted(data_dir.rglob("*.yaml"))
-        return [file for file in files if file.is_file() and file.name != ".gitkeep"]
+        return [file for file in files if file.is_file() and file.name in self.ignored_files]
 
-    @staticmethod
-    def get_all_photos():
+    def get_all_photos(self):
         photo_dir = settings.content_photo_dir
         files = sorted(photo_dir.rglob("*"))
-        return [file for file in files if file.is_file() and file.name != ".gitkeep"]
+        return [file for file in files if file.is_file() and file.name in self.ignored_files]
 
-    @staticmethod
-    def get_all_videos():
+    def get_all_videos(self):
         video_dir = settings.content_video_dir
         files = sorted(video_dir.rglob("*"))
-        return [file for file in files if file.is_file() and file.name != ".gitkeep"]
+        return [file for file in files if file.is_file() and file.name in self.ignored_files]
 
 
 def check_base_file_exist() -> list[str]:
