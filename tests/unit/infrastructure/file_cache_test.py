@@ -9,11 +9,11 @@ from src.config import settings
 from src.domain.exceptions import CacheExpiredError, CacheMissError
 from src.domain.value_objects.cache import CacheKey, CacheMediaType, CacheRecord
 from src.domain.value_objects.network import Network
-from src.infrastructure.file_cache import SQLiteMediaCache
+from src.infrastructure.file_cache import MemoryMediaCache, SQLiteMediaCache
 
 
 @pytest.fixture
-def cache(tmp_path):
+def sqlite_cache(tmp_path):
     original_path = SQLiteMediaCache._db_path
     SQLiteMediaCache._db_path = str(tmp_path / "temp.db")
     cache = asyncio.run(SQLiteMediaCache.get_instance())
@@ -23,6 +23,17 @@ def cache(tmp_path):
         asyncio.run(cache.close())
         SQLiteMediaCache._instance = None
         SQLiteMediaCache._db_path = original_path
+
+
+@pytest.fixture
+def memory_cache() -> MemoryMediaCache:
+    return MemoryMediaCache()
+
+
+@pytest.fixture(params=["sqlite_cache", "memory_cache"])
+def cache(request):
+    fixture_value = request.getfixturevalue(request.param)
+    return fixture_value
 
 
 @pytest.fixture
@@ -59,16 +70,15 @@ def make_cache_record(temp_file):
     return _make_cache_record
 
 
-@pytest.mark.asyncio
-async def test_get_instance(cache):
-    instance = await cache.get_instance()
+@pytest.mark.parametrize("cache_cls", (MemoryMediaCache, SQLiteMediaCache))
+async def test_get_instance(cache_cls):
+    instance = await cache_cls.get_instance()
     assert instance._instance is not None
 
-    same_instance = await cache.get_instance()
+    same_instance = await cache_cls.get_instance()
     assert instance is same_instance
 
 
-@pytest.mark.asyncio
 async def test_add_and_get(cache, temp_file, cache_key, make_cache_record):
     record = make_cache_record(file_id="123")
     await cache.add(cache_key, record)
@@ -78,7 +88,6 @@ async def test_add_and_get(cache, temp_file, cache_key, make_cache_record):
     assert fetched.updated_at is not None
 
 
-@pytest.mark.asyncio
 async def test_duplicate_add(cache, cache_key, make_cache_record):
     records = (make_cache_record(file_id="123"), make_cache_record(file_id="234"))
     for record in records:
@@ -89,13 +98,11 @@ async def test_duplicate_add(cache, cache_key, make_cache_record):
     assert entries[cache_key].file_id == records[-1].file_id
 
 
-@pytest.mark.asyncio
 async def test_get_miss_raises(cache, cache_key):
     with pytest.raises(CacheMissError):
         await cache.get(cache_key)
 
 
-@pytest.mark.asyncio
 async def test_expiration(cache, cache_key, make_cache_record):
     record = make_cache_record(file_id="exp", expires=1)
     await cache.add(cache_key, record)
@@ -107,7 +114,6 @@ async def test_expiration(cache, cache_key, make_cache_record):
         await cache.get(cache_key)
 
 
-@pytest.mark.asyncio
 async def test_new_updated_at(cache, cache_key):
     updated_at = datetime(2000, 1, 1)
     record = CacheRecord(
@@ -121,7 +127,6 @@ async def test_new_updated_at(cache, cache_key):
     assert fetched.updated_at != updated_at
 
 
-@pytest.mark.asyncio
 async def test_remove_and_all_entries(cache, make_cache_record, make_cache_key):
     cache_keys = (make_cache_key(key="del"), make_cache_key(key="other"))
     records = (make_cache_record(file_id="del"), make_cache_record(file_id="other"))
@@ -148,7 +153,6 @@ async def test_remove_and_all_entries(cache, make_cache_record, make_cache_key):
         await cache.get(first_key)
 
 
-@pytest.mark.asyncio
 async def test_get_many(cache, make_cache_key, make_cache_record):
     cache_keys = (
         make_cache_key(key="temp1"),
@@ -172,14 +176,12 @@ async def test_get_many(cache, make_cache_key, make_cache_record):
     assert len(all_entries) == 3
 
 
-@pytest.mark.asyncio
 async def test_get_many_miss_raises(cache, make_cache_key):
     cache_keys = (make_cache_key(key="temp1"), make_cache_key(key="temp2"))
     with pytest.raises(CacheMissError):
         await cache.get_many(cache_keys)
 
 
-@pytest.mark.asyncio
 async def test_get_many_with_expiration(cache, make_cache_key, make_cache_record):
     cache_keys = (make_cache_key(key="temp1"), make_cache_key(key="temp2"))
     records = (make_cache_record(file_id="123"), make_cache_record(file_id="234", expires=1))
@@ -192,3 +194,16 @@ async def test_get_many_with_expiration(cache, make_cache_key, make_cache_record
     await sleep(1.1)
     with pytest.raises(CacheExpiredError):
         await cache.get_many(cache_keys)
+
+
+async def test_persistence_after_reconnect(sqlite_cache, make_cache_record, cache_key):
+    record = make_cache_record(file_id="123")
+    await sqlite_cache.add(cache_key, record)
+    await sqlite_cache.close()
+
+    sqlite_cache.__class__._instance = None
+    new_cache = await sqlite_cache.get_instance()
+
+    fetched = await new_cache.get(cache_key)
+    assert fetched.file_id == "123"
+    await new_cache.close()
