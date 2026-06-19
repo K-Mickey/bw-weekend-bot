@@ -158,4 +158,4 @@ class VKMessageSender(MessageSender):
             record = CacheRecord.from_file(file_id=attachment, file_path=file_path)
             await self.cache.add(cache_key, record)
         except Exception as e:
-            logger.error(f"Failed to update cache for media: {e}")
+            logger.exception(f"Failed to update cache for media: {e}")

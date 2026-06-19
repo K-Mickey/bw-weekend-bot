@@ -26,7 +26,7 @@ class LocalContentRepository(ContentRepository):
                 raw = yaml.safe_load(f)
             return content_factory(raw)
         except Exception as e:
-            logger.error(f"Failed to load content from {file_path}: {e}")
+            logger.exception(f"Failed to load content from {file_path}: {e}")
             raise
 
     def get_content_path(self, file_name: Path | str) -> Path:

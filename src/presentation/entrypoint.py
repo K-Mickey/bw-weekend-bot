@@ -84,7 +84,7 @@ def connect_vk_webhook(app: web.Application):
         try:
             await vk_bot.process_event(event)
         except Exception as e:
-            logger.error("Failed to process event: %s", e)
+            logger.exception("Failed to process event: %s", e)
 
     app.router.add_post(settings.vk.webhook_path, vk_webhook)
     app.on_startup.append(on_startup_vk)
