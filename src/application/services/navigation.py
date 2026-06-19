@@ -2,7 +2,7 @@ import logging
 
 from src.application.keyboard_helper import add_automatic_buttons, find_target_button_in_content
 from src.domain.aggregates import Content
-from src.domain.exceptions import ButtonNotFoundError, ContentNotFoundError
+from src.domain.exceptions import ContentNotFoundError
 from src.domain.ports import StateStore
 from src.domain.ports.content_repository import ContentRepository
 from src.domain.value_objects.button import ButtonType
@@ -63,7 +63,8 @@ class NavigationService:
 
         button = find_target_button_in_content(start_content, button_label)
         if not button:
-            raise ButtonNotFoundError(button_label)
+            logger.debug(f"Button {button_label} not found in content")
+            return self.get_content_by_id(NodeName.REPEAT)
 
         match button.type:
             case ButtonType.MAIN_MENU:
