@@ -24,6 +24,7 @@ class MemoryMediaCache(MediaCache):
         return cls._instance
 
     async def close(self):
+        """Нечего закрывать"""
         pass
 
     async def get(self, cache_key: CacheKey) -> CacheRecord:

@@ -57,4 +57,5 @@ class MemoryStateStore(StateStore):
         return cls._instance
 
     async def close(self) -> None:
+        """Нечего закрывать"""
         pass
