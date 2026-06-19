@@ -17,7 +17,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --require-hashes --only-binary :all: uv
+          pip install --only-binary :all: uv
           make install
 
       - name: Run linter and Pytest
