@@ -194,7 +194,9 @@ def check_base_file_exist() -> list[str]:
     repository = LocalContentRepository()
     not_exist_files = []
     for file in NodeName:
-        if not repository.get_content_path(file):
+        try:
+            repository.get_content_path(file)
+        except ContentNotFoundError:
             not_exist_files.append(file)
 
     return not_exist_files
@@ -220,7 +222,7 @@ def main():
         return 1
 
     checker = Checker()
-    statistic = checker.check_content([NodeName.ROOT])
+    statistic = checker.check_content(NodeName)
 
     result = statistic.get_statistic(
         all_yaml_files=checker.get_all_files(),
