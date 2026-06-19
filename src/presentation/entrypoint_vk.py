@@ -62,8 +62,10 @@ def get_vk_bot(callback: BotCallback | None = None) -> Bot:
         error_handler=error_handler,
     )
 
-    cache, state_store = asyncio.gather(SQLiteMediaCache.get_instance(), SQLiteStateStore.get_instance())
+    cache = asyncio.run(SQLiteMediaCache.get_instance())
+    state_store = asyncio.run(SQLiteStateStore.get_instance())
     content_repository = LocalContentRepository()
+
     message_sender = VKMessageSender(
         bot=bot,
         cache=cache,
