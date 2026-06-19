@@ -10,7 +10,7 @@ from src.application.services.vk_message_sender import VKMessageSender
 from src.config import settings
 from src.infrastructure.content_repository import LocalContentRepository
 from src.infrastructure.file_cache import SQLiteMediaCache
-from src.infrastructure.state_store import MemoryStateStore
+from src.infrastructure.state_store import SQLiteStateStore
 from src.presentation.vk_labeler import labeler
 
 logger = logging.getLogger(__name__)
@@ -62,15 +62,16 @@ def get_vk_bot(callback: BotCallback | None = None) -> Bot:
         error_handler=error_handler,
     )
 
-    cache, state_store = asyncio.gather(SQLiteMediaCache.get_instance(), MemoryStateStore.get_instance())
+    cache, state_store = asyncio.gather(SQLiteMediaCache.get_instance(), SQLiteStateStore.get_instance())
+    content_repository = LocalContentRepository()
     message_sender = VKMessageSender(
         bot=bot,
         cache=cache,
-        content_repository=LocalContentRepository(),
+        content_repository=content_repository,
     )
     navigation_service = NavigationService(
         state_store=state_store,
-        content_repository=LocalContentRepository(),
+        content_repository=content_repository,
     )
 
     middleware = InjectionMiddleware

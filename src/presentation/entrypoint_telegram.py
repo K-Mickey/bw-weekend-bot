@@ -9,7 +9,7 @@ from src.application.services import NavigationService, TelegramMessageSender
 from src.config import settings
 from src.infrastructure.content_repository import LocalContentRepository
 from src.infrastructure.file_cache import SQLiteMediaCache
-from src.infrastructure.state_store import MemoryStateStore
+from src.infrastructure.state_store import SQLiteStateStore
 from src.presentation.telegram_router import router
 
 logger = logging.getLogger(__name__)
@@ -28,17 +28,19 @@ def get_telegram_bot() -> Bot:
 
 
 async def get_telegram_dp() -> Dispatcher:
-    message_sender = TelegramMessageSender(
-        cache=await SQLiteMediaCache.get_instance(),
-        content_repository=LocalContentRepository(),
-    )
-    navigation_service = NavigationService(
-        state_store=await MemoryStateStore.get_instance(),
-        content_repository=LocalContentRepository(),
-    )
+    cache = await SQLiteMediaCache.get_instance()
+    state_store = await SQLiteStateStore.get_instance()
+    content_repository = LocalContentRepository()
+
     dp = Dispatcher(
-        message_sender=message_sender,
-        navigation_service=navigation_service,
+        message_sender=TelegramMessageSender(
+            cache=cache,
+            content_repository=content_repository,
+        ),
+        navigation_service=NavigationService(
+            state_store=state_store,
+            content_repository=content_repository,
+        ),
     )
     dp.include_router(router)
     return dp
