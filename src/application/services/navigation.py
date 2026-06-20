@@ -2,7 +2,7 @@ import logging
 
 from src.application.keyboard_helper import add_automatic_buttons, find_target_button_in_content
 from src.domain.aggregates import Content
-from src.domain.exceptions import ContentNotFoundError
+from src.domain.exceptions import ContentNotFoundError, HistoryNotFoundError
 from src.domain.ports import StateStore
 from src.domain.ports.content_repository import ContentRepository
 from src.domain.value_objects.button import ButtonType
@@ -30,12 +30,10 @@ class NavigationService:
 
         content_id = await self.state_store.get_current_state(user_key)
         if not content_id:
-            logger.debug(f"User {user_key} has no current state, return ROOT content")
-            await self.state_store.append(user_key, NodeName.ROOT)
-            content_id = NodeName.ROOT
+            logger.debug(f"User {user_key} has no current state")
+            raise HistoryNotFoundError(user_key)
 
         content = self.get_content_by_id(content_id)
-
         history = await self.state_store.get_history(user_key)
         add_automatic_buttons(content, history)
 
@@ -45,6 +43,7 @@ class NavigationService:
         user_key = UserKey(network, str(external_user_id))
         logger.debug(f"Starting conversation for user: {user_key}")
         await self.state_store.clear(user_key)
+        await self.state_store.append(user_key, NodeName.ROOT)
         return await self.build_current_content(user_key)
 
     async def navigate(
@@ -56,10 +55,11 @@ class NavigationService:
         user_key = UserKey(network, str(external_user_id))
         logger.debug(f"Navigating to {button_label} for user: {user_key}")
 
-        start_content = await self.build_current_content(user_key)
-        if not start_content:
-            logger.warning(f"User {user_key} has no session or current state")
-            return await self.build_current_content(user_key)
+        try:
+            start_content = await self.build_current_content(user_key)
+        except HistoryNotFoundError:
+            logger.debug(f"User: {user_key}, has empty history")
+            return await self.start_conversation(network, external_user_id)
 
         button = find_target_button_in_content(start_content, button_label)
         if not button:
@@ -71,7 +71,9 @@ class NavigationService:
                 return await self.start_conversation(network, external_user_id)
 
             case ButtonType.BACK:
-                await self.state_store.pop(user_key)
+                popped = await self.state_store.pop(user_key)
+                if not popped:
+                    return await self.start_conversation(network, external_user_id)
 
             case _:
                 await self.state_store.append(user_key, button.target)

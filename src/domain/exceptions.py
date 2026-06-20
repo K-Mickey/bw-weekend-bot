@@ -21,8 +21,9 @@ class ButtonNotFoundError(NotFoundError):
         super().__init__(f"Button not found: {button_label}")
 
 
-class SessionNotFoundError(NotFoundError):
-    pass
+class HistoryNotFoundError(NotFoundError):
+    def __init__(self, user_key):
+        super().__init__(f"History not found for user: {user_key}")
 
 
 class CacheError(DomainError):
