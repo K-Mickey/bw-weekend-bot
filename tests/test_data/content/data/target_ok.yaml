@@ -4,8 +4,8 @@
     - id: c
       type: post
       media:
-        - type: text
-          text: Hello world
+        type: text
+        text: Hello world
       keyboard:
         - - target: b
 - id: b

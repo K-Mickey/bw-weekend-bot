@@ -4,5 +4,5 @@ posts:
   - id: post_ok
     type: post
     media:
-      - type: text
-        text: Hello world
+      type: text
+      text: Hello world

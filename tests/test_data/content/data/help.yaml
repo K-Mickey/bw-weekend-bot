@@ -1,8 +1,8 @@
 id: help
 type: post
 media:
-  - type: text
-    text: |
-      Help message
+  type: text
+  text: |
+    Help message
 flags:
   build: false

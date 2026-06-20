@@ -1,0 +1,8 @@
+id: retry
+type: post
+media:
+  type: text
+  text: |
+    Ваш ввод оказался неожиданным 😰
+flags:
+  build: false
