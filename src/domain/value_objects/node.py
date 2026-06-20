@@ -5,7 +5,7 @@ class NodeName(StrEnum):
     ROOT = "main"
     HELP = "help"
     ERROR = "error"
-    REPEAT = "retry"
+    RETRY = "retry"
 
 
 class NodeKind(StrEnum):

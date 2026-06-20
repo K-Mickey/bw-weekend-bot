@@ -150,7 +150,7 @@ async def test_navigate_unexpected_button(navigation_service: NavigationService,
     await navigation_service.state_store.set_history(user_key, (NodeName.ROOT,))
     content = await navigation_service.navigate(user_key.network, user_key.external_id, "unexpected_button")
 
-    assert content.id == NodeName.REPEAT
+    assert content.id == NodeName.RETRY
     assert await navigation_service.state_store.get_history(user_key) == (NodeName.ROOT,)
 
 

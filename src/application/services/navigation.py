@@ -64,7 +64,7 @@ class NavigationService:
         button = find_target_button_in_content(start_content, button_label)
         if not button:
             logger.debug(f"Button {button_label} not found in content")
-            return self.get_content_by_id(NodeName.REPEAT)
+            return self.get_content_by_id(NodeName.RETRY)
 
         match button.type:
             case ButtonType.MAIN_MENU:
