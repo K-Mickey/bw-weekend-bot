@@ -57,8 +57,8 @@ async def on_startup_telegram(bot: TelegramBot):
 
 
 def connect_vk_webhook(app: web.Application):
-    secret_key = ""
-    confirmation_code = ""
+    secret_key = settings.vk.webhook_secret
+    confirmation_code = settings.vk.confirmation_code
 
     callback = BotCallback(
         url=settings.vk.webhook_url,

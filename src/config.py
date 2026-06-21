@@ -23,6 +23,7 @@ class VKSettings(BaseSettings):
     webhook_title: str = "bw-weekend-bot"
     webhook_path: str = "/vk-webhook"
     webhook_secret: str = ""
+    confirmation_code: str = ""
 
     model_config = SettingsConfigDict(
         env_prefix="VK_",
