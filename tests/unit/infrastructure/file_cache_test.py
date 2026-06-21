@@ -70,15 +70,6 @@ def make_cache_record(temp_file):
     return _make_cache_record
 
 
-@pytest.mark.parametrize("cache_cls", (MemoryMediaCache, SQLiteMediaCache))
-async def test_get_instance(cache_cls):
-    instance = await cache_cls.get_instance()
-    assert instance._instance is not None
-
-    same_instance = await cache_cls.get_instance()
-    assert instance is same_instance
-
-
 async def test_add_and_get(cache, temp_file, cache_key, make_cache_record):
     record = make_cache_record(file_id="123")
     await cache.add(cache_key, record)

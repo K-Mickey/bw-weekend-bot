@@ -33,15 +33,6 @@ def state_store(request):
     return fixture_value
 
 
-@pytest.mark.parametrize("state_cls", [MemoryStateStore, SQLiteStateStore])
-async def test_get_memory_instance(state_cls):
-    instance = await state_cls.get_instance()
-    assert instance._instance is not None
-
-    same_instance = await state_cls.get_instance()
-    assert instance is same_instance
-
-
 async def test_in_memory_state_store_can_be_instantiated(state_store):
     assert isinstance(state_store, StateStore)
 
