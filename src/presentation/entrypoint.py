@@ -13,8 +13,14 @@ from src.presentation.entrypoint_vk import get_vk_bot
 logger = logging.getLogger(__name__)
 
 
+async def health_check(request: web.Request) -> web.Response:
+    return web.json_response({"status": "ok"})
+
+
 def start_webhook() -> None:
     app = web.Application()
+
+    app.router.add_get("/health", health_check)
 
     connect_telegram_webhook(app)
     connect_vk_webhook(app)
@@ -88,3 +94,7 @@ def connect_vk_webhook(app: web.Application):
 
     app.router.add_post(settings.vk.webhook_path, vk_webhook)
     app.on_startup.append(on_startup_vk)
+
+
+if __name__ == "__main__":
+    start_webhook()

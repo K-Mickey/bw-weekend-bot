@@ -5,6 +5,7 @@ from typing import Iterable, Self
 import aiosqlite
 from aiosqlite import Connection
 
+from src.config import settings
 from src.domain.exceptions import CacheExpiredError, CacheMissError
 from src.domain.ports import MediaCache
 from src.domain.value_objects.cache import CacheKey, CacheMediaType, CacheRecord
@@ -16,7 +17,7 @@ class SQLiteMediaCache(MediaCache):
     _instance: Self | None = None
     _lock = asyncio.Lock()
     _connection: Connection | None = None
-    _db_path: str = "media_cache.db"
+    _db_path: str = settings.media_cache_db
 
     @classmethod
     async def get_instance(cls) -> Self:

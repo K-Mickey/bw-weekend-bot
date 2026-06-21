@@ -6,3 +6,4 @@ content/**/*
 !content/**/.gitkeep
 old/
 *.db
+database/

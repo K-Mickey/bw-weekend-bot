@@ -27,4 +27,7 @@ tg-run:
 vk-run:
 	uv run src/presentation/entrypoint_vk.py
 
-.PHONY: install build package-install test test-coverage lint check-content check tg-run vk-run
+prod-run: check-content
+	docker compose up --build
+
+.PHONY: install build package-install test test-coverage lint check-content check tg-run vk-run prod-run

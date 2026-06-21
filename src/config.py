@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     content_photo_dir: Path = content_dir / "photo"
     content_video_dir: Path = content_dir / "video"
 
+    database_dir: Path = base_dir / "database"
+    state_store_db: Path = database_dir / "state_store.db"
+    media_cache_db: Path = database_dir / "media_cache.db"
+
     log_level: str = "INFO"
 
     web_server_host: str = "0.0.0.0"

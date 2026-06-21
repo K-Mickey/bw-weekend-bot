@@ -6,6 +6,7 @@ from typing import Iterable, Self
 import aiosqlite
 from aiosqlite import Connection
 
+from src.config import settings
 from src.domain.ports import StateStore
 from src.domain.value_objects.user_key import UserKey
 from src.infrastructure.exceptions import LostConnectionError
@@ -15,7 +16,7 @@ class SQLiteStateStore(StateStore):
     _instance: Self | None = None
     _lock = asyncio.Lock()
     _connection: Connection | None = None
-    _db_path: str = "state_store.db"
+    _db_path: str = settings.state_store_db
 
     async def get_current_state(self, user_key: UserKey) -> str | None:
         if not self._connection:
