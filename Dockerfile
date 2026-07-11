@@ -29,6 +29,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /app/database && chmod 777 /app/database
+
 WORKDIR /app
 
 RUN useradd -m -u 1000 appuser
