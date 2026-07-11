@@ -97,4 +97,5 @@ def connect_vk_webhook(app: web.Application):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=settings.log_level)
     start_webhook()
