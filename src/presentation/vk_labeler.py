@@ -1,7 +1,7 @@
 import logging
 
 from vkbottle.bot import BotLabeler, Message
-from vkbottle.dispatch.rules.base import CommandRule
+from vkbottle.dispatch.rules.base import CommandRule, TextRule
 
 from src.application.services import MessageSender, NavigationService
 from src.domain.value_objects.network import Network
@@ -12,7 +12,7 @@ labeler = BotLabeler()
 logger = logging.getLogger(__name__)
 
 
-@labeler.private_message(CommandRule("начать"))
+@labeler.private_message(CommandRule("начать"), TextRule("Начать"))
 async def cmd_start(message: Message, message_sender: MessageSender, navigation_service: NavigationService) -> None:
     logger.debug("Start handler is called")
     user_id = message.from_id
