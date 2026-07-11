@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     stop_signal: SIGINT
     ports:
-      - "127.0.0.1:8011:8000"
+      - "127.0.0.1:8011:8011"
     env_file: .env
     environment:
       - PYTHONUNBUFFERED=1
