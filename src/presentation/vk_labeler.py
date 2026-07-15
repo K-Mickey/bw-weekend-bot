@@ -12,7 +12,7 @@ labeler = BotLabeler()
 logger = logging.getLogger(__name__)
 
 
-@labeler.private_message(CommandRule("начать"), TextRule("Начать"))
+@labeler.private_message(CommandRule("начать") | TextRule("начать", ignore_case=True))
 async def cmd_start(message: Message, message_sender: MessageSender, navigation_service: NavigationService) -> None:
     logger.debug("Start handler is called")
     user_id = message.from_id
