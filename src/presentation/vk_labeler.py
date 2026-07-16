@@ -47,7 +47,7 @@ async def text_handler(message: Message, message_sender: MessageSender, navigati
         return
 
     try:
-        content = await navigation_service.navigate(Network.TELEGRAM, user_id, text)
+        content = await navigation_service.navigate(Network.VK, user_id, text)
         logger.debug(f"Navigated to {content.id}")
         await message_sender.send_content(message, content)
 

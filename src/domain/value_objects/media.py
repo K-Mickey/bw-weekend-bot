@@ -83,7 +83,7 @@ class Video(BaseModel):
         if not v:
             return v
 
-        correct_urls = ("https://vkvideo.ru", "https://vk.com")
+        correct_urls = ("https://vkvideo.ru", "https://vk.com", "https://vk.ru")
         if not any(v.startswith(url) for url in correct_urls):
             raise VideoValidationError(f"vk_url must start with one of {correct_urls}")
         return v
